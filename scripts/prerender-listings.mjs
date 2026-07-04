@@ -27,8 +27,8 @@ async function fetchListings() {
   const url = `${APPWRITE_ENDPOINT}/databases/${APPWRITE_DATABASE_ID}/collections/listings/documents`;
   const params = new URLSearchParams({
     queries: JSON.stringify([
-      { method: 'equal', attribute: 'status', values: ['available'] },
-      { method: 'limit', values: [100] },
+      'equal("status","available")',
+      'limit(100)',
     ]),
   });
 
@@ -45,8 +45,8 @@ async function fetchListingImages(listingId) {
   const url = `${APPWRITE_ENDPOINT}/databases/${APPWRITE_DATABASE_ID}/collections/listing_images/documents`;
   const params = new URLSearchParams({
     queries: JSON.stringify([
-      { method: 'equal', attribute: 'listingId', values: [listingId] },
-      { method: 'orderAsc', attribute: 'sortOrder' },
+      `equal("listingId","${listingId}")`,
+      'orderAsc("sortOrder")',
     ]),
   });
 
