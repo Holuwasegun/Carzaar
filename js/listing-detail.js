@@ -218,10 +218,18 @@ async function init() {
     document.getElementById('skeletonLoader').style.display = 'none';
     document.getElementById('listingDetail').style.display = 'block';
 
-    renderListing(listing);
-    renderGallery();
+  renderListing(listing);
+  renderGallery();
 
-    incrementViewCount(listingId);
+  if (listing.status === 'sold') {
+    const gallery = document.getElementById('gallery');
+    const overlay = document.createElement('div');
+    overlay.className = 'sold-overlay sold-watermark';
+    overlay.innerHTML = '<span>SOLD</span>';
+    gallery.appendChild(overlay);
+  }
+
+  incrementViewCount(listingId);
   } catch (err) {
     console.error('Failed to load listing:', err);
     document.getElementById('skeletonLoader').style.display = 'none';

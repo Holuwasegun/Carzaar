@@ -30,7 +30,6 @@ const filterElements = {
 
 async function fetchListings() {
   const queries = [
-    Query.equal('status', 'available'),
     Query.orderDesc('$createdAt'),
     Query.limit(PAGE_SIZE),
   ];
@@ -45,7 +44,6 @@ async function fetchMoreListings() {
 
   try {
     const queries = [
-      Query.equal('status', 'available'),
       Query.orderDesc('$createdAt'),
       Query.limit(PAGE_SIZE),
       Query.cursorAfter(lastDocument),
@@ -119,9 +117,10 @@ function renderCard(listing, firstImageUrl) {
 
   return `
     <article class="card" role="listitem" data-id="${listing.$id}" onclick="window.location.href='/listings/detail.html?id=${listing.$id}'">
-      <div class="card-image">
+      <div class="card-image${listing.status === 'sold' ? ' sold' : ''}">
         <img src="${imgSrc}" alt="${title}" loading="lazy">
         <span class="condition-badge ${getConditionClass(listing.condition)}">${listing.condition === 'Foreign Used (Tokunbo)' ? 'Tokunbo' : listing.condition === 'Nigerian Used' ? 'Nigerian Used' : 'Brand New'}</span>
+        ${listing.status === 'sold' ? '<div class="sold-overlay"><span>SOLD</span></div>' : ''}
       </div>
       <div class="card-body">
         <div class="card-title">${title}${listing.color ? ` (${listing.color})` : ''}</div>
@@ -185,8 +184,6 @@ function getFilterState() {
 
 function filterListings(listings, filters) {
   return listings.filter(listing => {
-    if (listing.status !== 'available') return false;
-
     if (filters.location) {
       const loc = (listing.location || '').toLowerCase();
       if (!loc.includes(filters.location)) return false;
@@ -234,7 +231,6 @@ function updateChecklistCounts() {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
     const count = allListings.filter(l => {
-      if (l.status !== 'available') return false;
       if (checkbox.checked) return l.make === checkbox.value;
       return true;
     }).length;
@@ -244,35 +240,35 @@ function updateChecklistCounts() {
   document.querySelectorAll('#conditionChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
-    const count = allListings.filter(l => l.status === 'available' && l.condition === checkbox.value).length;
+    const count = allListings.filter(l => l.condition === checkbox.value).length;
     countEl.textContent = `(${count})`;
   });
 
   document.querySelectorAll('#transmissionChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
-    const count = allListings.filter(l => l.status === 'available' && l.transmission === checkbox.value).length;
+    const count = allListings.filter(l => l.transmission === checkbox.value).length;
     countEl.textContent = `(${count})`;
   });
 
   document.querySelectorAll('#bodyTypeChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
-    const count = allListings.filter(l => l.status === 'available' && l.bodyType === checkbox.value).length;
+    const count = allListings.filter(l => l.bodyType === checkbox.value).length;
     countEl.textContent = `(${count})`;
   });
 
   document.querySelectorAll('#colorChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
-    const count = allListings.filter(l => l.status === 'available' && l.color === checkbox.value).length;
+    const count = allListings.filter(l => l.color === checkbox.value).length;
     countEl.textContent = `(${count})`;
   });
 
   document.querySelectorAll('#fuelChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
-    const count = allListings.filter(l => l.status === 'available' && l.fuel === checkbox.value).length;
+    const count = allListings.filter(l => l.fuel === checkbox.value).length;
     countEl.textContent = `(${count})`;
   });
 }
@@ -322,7 +318,7 @@ async function applyFilters() {
 
 function updateMakeChips(listings) {
   const chipContainer = document.getElementById('quickMakeChips');
-  const makes = [...new Set(listings.filter(l => l.status === 'available').map(l => l.make))].slice(0, 6);
+  const makes = [...new Set(listings.map(l => l.make))].slice(0, 6);
   chipContainer.innerHTML = makes.map(make => `
     <button class="filter-chip" data-make="${make}">${make}</button>
   `).join('');
@@ -342,10 +338,10 @@ function updateMakeChips(listings) {
 }
 
 function buildChecklists() {
-  const makes = [...new Set(allListings.filter(l => l.status === 'available').map(l => l.make))].sort();
+  const makes = [...new Set(allListings.map(l => l.make))].sort();
   const conditions = ['Brand New', 'Nigerian Used', 'Foreign Used (Tokunbo)'];
-  const bodyTypes = [...new Set(allListings.filter(l => l.status === 'available').map(l => l.bodyType))].sort();
-  const colors = [...new Set(allListings.filter(l => l.status === 'available').map(l => l.color))].sort();
+  const bodyTypes = [...new Set(allListings.map(l => l.bodyType))].sort();
+  const colors = [...new Set(allListings.map(l => l.color))].sort();
 
   document.getElementById('makeChecklist').innerHTML = makes.map(make => `
     <label><input type="checkbox" value="${make}"> ${make} <span class="count"></span></label>
