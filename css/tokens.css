@@ -1,11 +1,31 @@
 :root {
-  --color-brand: #1a2332;
-  --color-accent: #d97706;
-  --color-white: #ffffff;
-  --color-neutral-100: #f1f5f9;
-  --color-neutral-900: #0f172a;
-  
-  --font-family: system-ui, sans-serif;
-  --space-4: 16px;
+  /* Color Palette - Professional/Trustworthy */
+  --color-brand: #0f172a;        /* Deep Navy */
+  --color-accent: #059669;       /* Professional Emerald (WhatsApp-adjacent) */
+  --color-bg: #f8fafc;           /* Light cool gray */
+  --color-surface: #ffffff;      /* White */
+  --color-text-main: #1e293b;    /* Dark Slate */
+  --color-text-muted: #64748b;   /* Slate Gray */
+  --color-border: #e2e8f0;       /* Light border */
+
+  /* Spacing Scale - 8px based */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+
+  /* Elevation */
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius-lg: 12px;
   --radius-md: 8px;
 }

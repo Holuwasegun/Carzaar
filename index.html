@@ -2,28 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Carzaar | Marketplace</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
 </head>
 <body>
-  <header>
+  <header class="header">
     <div class="container">
-      <h1>Carzaar</h1>
+      <h1 style="margin:0;">Carzaar</h1>
     </div>
   </header>
   
   <main class="container">
-    <section id="filters" class="card" style="margin-bottom: 20px;">
-      <h3>Filters</h3>
-      <input type="text" id="filter-make" placeholder="Make">
-      <input type="number" id="min-price" placeholder="Min Price">
-      <input type="number" id="max-price" placeholder="Max Price">
-      <button onclick="applyFilters()" class="btn btn-primary">Apply</button>
-    </section>
-    
-    <section id="listings">
+    <section id="listings" class="listings-grid">
       <p>Loading listings...</p>
     </section>
   </main>

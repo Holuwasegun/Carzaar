@@ -1,3 +1,24 @@
 @import 'tokens.css';
-body { font-family: var(--font-family); background: var(--color-neutral-100); }
-h1 { color: var(--color-brand); }
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+h1, h2, h3 {
+  color: var(--color-brand);
+  margin-bottom: var(--space-sm);
+}
+
+img { max-width: 100%; height: auto; }
