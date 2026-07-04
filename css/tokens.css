@@ -59,6 +59,7 @@
   --transition-base: 200ms ease-out;
   --transition-slow: 300ms ease-out;
 
+  --color-border: var(--gray-200);
   --sidebar-width: 280px;
   --header-height: 64px;
   --max-width: 1280px;

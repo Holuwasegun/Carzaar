@@ -84,3 +84,38 @@
 .toast.error {
   background: #e03131;
 }
+
+@media (max-width: 560px) {
+  .admin-table th:nth-child(4),
+  .admin-table td:nth-child(4),
+  .admin-table th:nth-child(5),
+  .admin-table td:nth-child(5) {
+    display: none;
+  }
+  .admin-table .btn {
+    padding: var(--space-1) var(--space-2);
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .admin-table td:last-child div {
+    flex-wrap: nowrap;
+    gap: var(--space-1);
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-table th:nth-child(2),
+  .admin-table td:nth-child(2) {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .admin-header .admin-nav a span {
+    display: none;
+  }
+  .admin-header .admin-nav .btn {
+    font-size: 11px;
+    padding: var(--space-1) var(--space-2);
+  }
+}
