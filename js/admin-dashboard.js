@@ -52,7 +52,7 @@ async function loadListings() {
         <td>
           <div style="display:flex;gap:var(--space-2)">
             <a href="/admin/listing-form.html?id=${listing.$id}" class="btn btn-sm btn-secondary">Edit</a>
-            ${listing.status !== 'sold' ? `<button class="btn btn-sm btn-secondary" onclick="markAsSold('${listing.$id}')">Mark Sold</button>` : ''}
+            ${listing.status === 'sold' ? `<button class="btn btn-sm btn-secondary" onclick="markAsAvailable('${listing.$id}')">Mark Available</button>` : `<button class="btn btn-sm btn-secondary" onclick="markAsSold('${listing.$id}')">Mark Sold</button>`}
             <button class="btn btn-sm btn-destructive" onclick="deleteListing('${listing.$id}')">Delete</button>
           </div>
         </td>
@@ -69,6 +69,8 @@ async function changeStatus(listingId, newStatus) {
     const updateData = { status: newStatus };
     if (newStatus === 'sold') {
       updateData.soldAt = new Date().toISOString();
+    } else if (newStatus === 'available') {
+      updateData.soldAt = null;
     }
     await databases.updateDocument(databaseId, LISTINGS_COLLECTION, listingId, updateData);
     showToast(`Listing marked as ${newStatus}`, 'success');
@@ -118,6 +120,14 @@ function setupConfirmDialog() {
     }
   });
 }
+
+window.markAsAvailable = function(listingId) {
+  showConfirm(
+    'Mark as Available?',
+    'This will change the listing status back to available and clear the sold date.',
+    () => changeStatus(listingId, 'available')
+  );
+};
 
 window.markAsSold = function(listingId) {
   showConfirm(
