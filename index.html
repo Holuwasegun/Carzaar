@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carzaar | Marketplace</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Carzaar</h1>
+    </div>
+  </header>
+  
+  <main class="container">
+    <section id="filters" class="card" style="margin-bottom: 20px;">
+      <h3>Filters</h3>
+      <input type="text" id="filter-make" placeholder="Make">
+      <input type="number" id="min-price" placeholder="Min Price">
+      <input type="number" id="max-price" placeholder="Max Price">
+      <button onclick="applyFilters()" class="btn btn-primary">Apply</button>
+    </section>
+    
+    <section id="listings">
+      <p>Loading listings...</p>
+    </section>
+  </main>
+
+  <script type="module" src="js/listings.js"></script>
+</body>
+</html>

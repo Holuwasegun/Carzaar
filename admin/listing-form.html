@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Listing</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Add New Car</h1>
+    <form id="add-form" class="card">
+      <input type="text" id="make" placeholder="Make" required>
+      <input type="text" id="model" placeholder="Model" required>
+      <input type="number" id="year" placeholder="Year" required>
+      <input type="number" id="price" placeholder="Price (NGN)" required>
+      <input type="text" id="vin" placeholder="VIN (Optional)">
+      <input type="text" id="plate_number" placeholder="Plate Number (Required if Registered)">
+      <input type="number" id="mileage" placeholder="Mileage" required>
+      <input type="number" id="prev_owners" placeholder="Number of Previous Owners" required>
+      <input type="number" id="engine_cap" placeholder="Engine Capacity (Liters)" step="0.1">
+      
+      <label>Accident History:</label>
+      <select id="accident_history" required>
+        <option value="none">None</option>
+        <option value="minor">Minor</option>
+        <option value="major">Major</option>
+        <option value="unknown">Unknown</option>
+      </select>
+
+      <label>Documentation Status:</label>
+      <select id="doc_status" required>
+        <option value="registered_valid_papers">Fully Registered</option>
+        <option value="registered_papers_pending">Registered, Papers Pending</option>
+        <option value="unregistered">Unregistered</option>
+      </select>
+
+      <label>Features:</label>
+      <div id="features-container"></div>
+
+      <input type="file" id="image-upload" accept="image/*" required>
+      <button type="submit" class="btn btn-primary">Save Listing</button>
+    </form>
+  </main>
+  <script type="module" src="../js/admin-listing-form.js"></script>
+</body>
+</html>

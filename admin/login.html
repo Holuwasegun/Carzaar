@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Carzaar Admin Login</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+</head>
+<body>
+  <main class="container" style="max-width: 400px; margin-top: 50px;">
+    <h1>Admin Login</h1>
+    <form id="login-form">
+      <input type="email" id="email" placeholder="Email" required style="display:block; width:100%; margin-bottom:10px;">
+      <input type="password" id="password" placeholder="Password" required style="display:block; width:100%; margin-bottom:10px;">
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+    <p id="error" style="color:red;"></p>
+  </main>
+  <script type="module" src="../js/admin-auth.js"></script>
+</body>
+</html>
