@@ -1,6 +1,6 @@
 const sdk = require('node-appwrite');
 
-const DATABASE_ID = '';
+const DATABASE_ID = 'carzaar';
 const COLLECTION_ID = 'listings';
 const ALLOWED_FIELDS = ['viewCount', 'whatsappClickCount'];
 

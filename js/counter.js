@@ -6,9 +6,7 @@ export async function incrementCounter(listingId, field) {
   if (!COUNTER_URL || !listingId || !field) return;
 
   try {
-    const body = JSON.stringify({
-      data: JSON.stringify({ listingId, field }),
-    });
+    const body = JSON.stringify({ listingId, field });
 
     const response = await fetch(COUNTER_URL, {
       method: 'POST',

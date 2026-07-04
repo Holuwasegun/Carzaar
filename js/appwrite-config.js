@@ -1,9 +1,8 @@
 const APPWRITE_CONFIG = {
-  endpoint: '',              // Your Appwrite server endpoint (e.g. 'https://cloud.appwrite.io/v1')
-  projectId: '',             // Your Appwrite project ID
-  databaseId: '',            // Your database ID (e.g. 'carzaar')
-  counterFunctionUrl: '',    // Full URL of the increment-counter Appwrite Function for HTTP execution
-                             // Format: https://cloud.appwrite.io/v1/functions/{functionId}/executions
+  endpoint: 'https://nyc.cloud.appwrite.io/v1',
+  projectId: '6a485ce20010aa81820a',
+  databaseId: 'carzaar',
+  counterFunctionUrl: '',
 };
 
 export default APPWRITE_CONFIG;
