@@ -25,14 +25,8 @@ const headers = {
 
 async function fetchListings() {
   const url = `${APPWRITE_ENDPOINT}/databases/${APPWRITE_DATABASE_ID}/collections/listings/documents`;
-  const params = new URLSearchParams({
-    queries: JSON.stringify([
-      'equal("status","available")',
-      'limit(100)',
-    ]),
-  });
-
-  const response = await fetch(`${url}?${params}`, { headers });
+  const queries = JSON.stringify(['equal("status","available")', 'limit(100)']);
+  const response = await fetch(`${url}?queries=${encodeURIComponent(queries)}`, { headers });
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`Failed to fetch listings: ${response.status} ${text}`);
@@ -43,14 +37,8 @@ async function fetchListings() {
 
 async function fetchListingImages(listingId) {
   const url = `${APPWRITE_ENDPOINT}/databases/${APPWRITE_DATABASE_ID}/collections/listing_images/documents`;
-  const params = new URLSearchParams({
-    queries: JSON.stringify([
-      `equal("listingId","${listingId}")`,
-      'orderAsc("sortOrder")',
-    ]),
-  });
-
-  const response = await fetch(`${url}?${params}`, { headers });
+  const queries = JSON.stringify([`equal("listingId","${listingId}")`, 'orderAsc("sortOrder")']);
+  const response = await fetch(`${url}?queries=${encodeURIComponent(queries)}`, { headers });
   if (!response.ok) return { documents: [] };
   return response.json();
 }
