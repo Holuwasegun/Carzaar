@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LISTINGS_DIR = join(__dirname, '..', 'listings');
@@ -17,31 +18,15 @@ if (!APPWRITE_ENDPOINT || !APPWRITE_PROJECT_ID || !APPWRITE_API_KEY || !APPWRITE
   process.exit(1);
 }
 
-const headers = {
-  'X-Appwrite-Project': APPWRITE_PROJECT_ID,
-  'X-Appwrite-Key': APPWRITE_API_KEY,
-  'Content-Type': 'application/json',
-};
+const require = createRequire(import.meta.url);
+const { Client, Databases, Query } = require('node-appwrite');
 
-async function fetchListings() {
-  const url = `${APPWRITE_ENDPOINT}/databases/${APPWRITE_DATABASE_ID}/collections/listings/documents`;
-  const queries = JSON.stringify(['equal("status","available")', 'limit(100)']);
-  const response = await fetch(`${url}?queries=${encodeURIComponent(queries)}`, { headers });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Failed to fetch listings: ${response.status} ${text}`);
-  }
+const client = new Client()
+  .setEndpoint(APPWRITE_ENDPOINT)
+  .setProject(APPWRITE_PROJECT_ID)
+  .setKey(APPWRITE_API_KEY);
 
-  return response.json();
-}
-
-async function fetchListingImages(listingId) {
-  const url = `${APPWRITE_ENDPOINT}/databases/${APPWRITE_DATABASE_ID}/collections/listing_images/documents`;
-  const queries = JSON.stringify([`equal("listingId","${listingId}")`, 'orderAsc("sortOrder")']);
-  const response = await fetch(`${url}?queries=${encodeURIComponent(queries)}`, { headers });
-  if (!response.ok) return { documents: [] };
-  return response.json();
-}
+const databases = new Databases(client);
 
 function getImageUrl(storageFileId) {
   return `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${storageFileId}/view?project=${APPWRITE_PROJECT_ID}`;
@@ -87,16 +72,27 @@ async function main() {
   }
 
   console.log('Fetching listings...');
-  const data = await fetchListings();
+  const data = await databases.listDocuments(APPWRITE_DATABASE_ID, 'listings', [
+    Query.equal('status', 'available'),
+    Query.limit(100),
+  ]);
   const listings = data.documents || [];
 
   console.log(`Found ${listings.length} listings. Generating pages...`);
 
   for (const listing of listings) {
-    const imagesData = await fetchListingImages(listing.$id);
-    const images = imagesData.documents || [];
-    const firstImage = images.length > 0 ? images[0] : null;
-    const imageUrl = firstImage ? getImageUrl(firstImage.storageFileId) : null;
+    let imageUrl = null;
+    try {
+      const imagesData = await databases.listDocuments(APPWRITE_DATABASE_ID, 'listing_images', [
+        Query.equal('listingId', listing.$id),
+        Query.orderAsc('sortOrder'),
+      ]);
+      const images = imagesData.documents || [];
+      const firstImage = images.length > 0 ? images[0] : null;
+      imageUrl = firstImage ? getImageUrl(firstImage.storageFileId) : null;
+    } catch (err) {
+      console.warn(`  Failed to fetch images for ${listing.$id}: ${err.message}`);
+    }
 
     const html = generateListingPage(listing, imageUrl);
     const filePath = join(LISTINGS_DIR, `${listing.$id}.html`);
