@@ -12,17 +12,17 @@ let client, account, databases, storage;
 let Query, ID, Permission, Role;
 
 function initAppwrite() {
-  if (typeof appwrite === 'undefined') {
+  if (typeof Appwrite === 'undefined') {
     throw new Error(
-      'Appwrite SDK not loaded. Add <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1/dist/umd/sdk.js"></script> to your HTML.'
+      'Appwrite SDK not loaded. Add <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1/dist/iife/sdk.js"></script> to your HTML.'
     );
   }
 
-  const { Client, Account, Databases, Storage } = appwrite;
-  Query = appwrite.Query;
-  ID = appwrite.ID;
-  Permission = appwrite.Permission;
-  Role = appwrite.Role;
+  const { Client, Account, Databases, Storage } = Appwrite;
+  Query = Appwrite.Query;
+  ID = Appwrite.ID;
+  Permission = Appwrite.Permission;
+  Role = Appwrite.Role;
 
   client = new Client()
     .setEndpoint(endpoint)
