@@ -1,11 +1,10 @@
 import { databases, databaseId, storage, Query } from './appwrite-client.js';
-import APPWRITE_CONFIG from './appwrite-config.js';
 import { getWhatsAppNumber, getWhatsAppUrl } from './whatsapp.js';
+import { incrementCounter } from './counter.js';
 
 const LISTINGS_COLLECTION = 'listings';
 const LISTING_IMAGES_COLLECTION = 'listing_images';
 const BUCKET_ID = 'car-images';
-const COUNTER_FUNCTION_ENDPOINT = APPWRITE_CONFIG.counterFunctionUrl;
 
 let currentImages = [];
 let currentIndex = 0;
@@ -133,7 +132,7 @@ function renderListing(listing) {
 
   const historySpecs = document.getElementById('historySpecs');
   const historyItems = [
-    { label: 'Previous Owners', value: listing.numberOfPreviousOwners },
+    { label: 'Previous Owners', value: listing.numberOfPreviousOwners != null ? listing.numberOfPreviousOwners : 'N/A' },
     { label: 'Accident History', value: listing.accidentHistory ? listing.accidentHistory.charAt(0).toUpperCase() + listing.accidentHistory.slice(1) : 'Unknown' },
     { label: 'Service History', value: listing.serviceHistoryAvailable ? 'Available' : 'Not Available' },
     { label: 'Spare Key', value: listing.hasSpareKey ? 'Yes' : 'No' },
@@ -162,12 +161,13 @@ function renderListing(listing) {
 }
 
 function formatDocumentationStatus(status) {
+  if (!status) return 'N/A';
   const map = {
     'registered_valid_papers': 'Registered with Valid Papers',
     'registered_papers_pending': 'Registered, Papers Pending',
     'unregistered': 'Unregistered',
   };
-  return map[status] || status;
+  return map[status] || 'N/A';
 }
 
 function setupWhatsAppButton(listing) {
@@ -178,16 +178,7 @@ function setupWhatsAppButton(listing) {
       const title = `${listing.make} ${listing.model} ${listing.year}`;
       const url = getWhatsAppUrl(number, title);
       window.open(url, '_blank');
-
-      try {
-        await fetch(COUNTER_FUNCTION_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ listingId: listing.$id, field: 'whatsappClickCount' }),
-        });
-      } catch (err) {
-        console.warn('Counter increment failed:', err);
-      }
+      incrementCounter(listing.$id, 'whatsappClickCount');
     } catch (err) {
       console.error('WhatsApp error:', err);
     }
@@ -195,15 +186,7 @@ function setupWhatsAppButton(listing) {
 }
 
 async function incrementViewCount(listingId) {
-  try {
-    await fetch(COUNTER_FUNCTION_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId, field: 'viewCount' }),
-    });
-  } catch (err) {
-    console.warn('View count increment failed:', err);
-  }
+  incrementCounter(listingId, 'viewCount');
 }
 
 async function init() {

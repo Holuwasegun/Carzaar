@@ -40,7 +40,6 @@ async function loadFeatures() {
 
 function setupImageUpload() {
   const input = document.getElementById('images');
-  const previewGrid = document.getElementById('imagePreviewGrid');
   const errorEl = document.getElementById('imageError');
 
   input.addEventListener('change', () => {
@@ -376,8 +375,9 @@ function showToast(message, type) {
   });
 }
 
-function init() {
-  initAuthGuard();
+async function init() {
+  const user = await initAuthGuard();
+  if (!user) return;
 
   document.getElementById('logoutBtn').addEventListener('click', logout);
 

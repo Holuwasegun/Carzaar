@@ -153,8 +153,9 @@ function showToast(message, type) {
   });
 }
 
-function init() {
-  initAuthGuard();
+async function init() {
+  const user = await initAuthGuard();
+  if (!user) return;
 
   document.getElementById('logoutBtn').addEventListener('click', logout);
 

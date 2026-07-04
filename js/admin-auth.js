@@ -18,20 +18,22 @@ export async function logout() {
   window.location.href = '/admin/login.html';
 }
 
-export function initAuthGuard() {
+export async function initAuthGuard() {
   const currentPage = window.location.pathname;
+  const isLoginPage = currentPage.includes('login.html');
 
-  account.get()
-    .then(user => {
-      if (currentPage.includes('login.html')) {
-        window.location.href = '/admin/dashboard.html';
-      }
-    })
-    .catch(() => {
-      if (!currentPage.includes('login.html')) {
-        window.location.href = '/admin/login.html';
-      }
-    });
+  try {
+    const user = await account.get();
+    if (isLoginPage) {
+      window.location.href = '/admin/dashboard.html';
+    }
+    return user;
+  } catch {
+    if (!isLoginPage) {
+      window.location.href = '/admin/login.html';
+    }
+    return null;
+  }
 }
 
 export async function getCurrentUser() {

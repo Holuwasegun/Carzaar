@@ -1,10 +1,8 @@
 import { databases, databaseId } from './appwrite-client.js';
-import APPWRITE_CONFIG from './appwrite-config.js';
+import { incrementCounter } from './counter.js';
 
 const ADMIN_PROFILE_COLLECTION = 'admin_profile';
 const LISTINGS_COLLECTION = 'listings';
-
-const COUNTER_FUNCTION_ENDPOINT = APPWRITE_CONFIG.counterFunctionUrl;
 
 export async function getWhatsAppNumber() {
   try {
@@ -29,18 +27,7 @@ export async function handleWhatsAppClick(listingId) {
     const title = `${listing.make} ${listing.model} ${listing.year}`;
     const url = getWhatsAppUrl(number, title);
     window.open(url, '_blank');
-    try {
-      const response = await fetch(COUNTER_FUNCTION_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId, field: 'whatsappClickCount' }),
-      });
-      if (!response.ok) {
-        console.warn('Counter increment failed');
-      }
-    } catch (err) {
-      console.warn('Counter increment error:', err);
-    }
+    incrementCounter(listingId, 'whatsappClickCount');
   } catch (err) {
     console.error('WhatsApp click handler error:', err);
   }

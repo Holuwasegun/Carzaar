@@ -1,7 +1,6 @@
 import { databases, databaseId, storage, Query } from './appwrite-client.js';
 
 const LISTINGS_COLLECTION = 'listings';
-const LISTING_IMAGES_COLLECTION = 'listing_images';
 const PAGE_SIZE = 12;
 const BUCKET_ID = 'car-images';
 
@@ -11,7 +10,6 @@ let displayedCount = 0;
 let lastDocument = null;
 let hasMore = true;
 let isLoading = false;
-let activeFilters = {};
 
 const listingsGrid = document.getElementById('listingsGrid');
 const loadMoreBtn = document.getElementById('loadMore');
@@ -30,29 +28,20 @@ const filterElements = {
   mileageMax: document.getElementById('filterMileageMax'),
 };
 
-const QUICK_PRICE_CHIPS = [
-  { min: '', max: '3000000', label: 'Under ₦3M' },
-  { min: '3000000', max: '7000000', label: '₦3M – ₦7M' },
-  { min: '7000000', max: '15000000', label: '₦7M – ₦15M' },
-  { min: '15000000', max: '', label: '₦15M+' },
-];
-
 async function fetchListings() {
   const queries = [
     Query.equal('status', 'available'),
     Query.orderDesc('$createdAt'),
     Query.limit(PAGE_SIZE),
   ];
-
-  const response = await databases.listDocuments(databaseId, LISTINGS_COLLECTION, queries);
-  return response;
+  return await databases.listDocuments(databaseId, LISTINGS_COLLECTION, queries);
 }
 
 async function fetchMoreListings() {
   if (!lastDocument || !hasMore || isLoading) return;
-
   isLoading = true;
   loadMoreBtn.textContent = 'Loading...';
+  loadMoreBtn.disabled = true;
 
   try {
     const queries = [
@@ -70,27 +59,17 @@ async function fetchMoreListings() {
     }
 
     allListings = [...allListings, ...newDocs];
-    lastDocument = newDocs[newDocs.length - 1];
-    displayedCount = allListings.length;
-    applyFilters();
+    lastDocument = newDocs.length > 0 ? newDocs[newDocs.length - 1] : null;
+
+    displayedCount += PAGE_SIZE;
+    await applyFilters();
   } catch (err) {
     console.error('Load more error:', err);
     showToast('Failed to load more listings', 'error');
   } finally {
     isLoading = false;
+    loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load more cars';
-  }
-}
-
-async function getListingImages(listingId) {
-  try {
-    const response = await databases.listDocuments(databaseId, LISTING_IMAGES_COLLECTION, [
-      Query.equal('listingId', listingId),
-      Query.orderAsc('sortOrder'),
-    ]);
-    return response.documents;
-  } catch {
-    return [];
   }
 }
 
@@ -100,7 +79,7 @@ async function getAllImagesMap(listingIds) {
   for (let i = 0; i < listingIds.length; i += chunkSize) {
     const chunk = listingIds.slice(i, i + chunkSize);
     try {
-      const response = await databases.listDocuments(databaseId, LISTING_IMAGES_COLLECTION, [
+      const response = await databases.listDocuments(databaseId, 'listing_images', [
         Query.equal('listingId', chunk),
         Query.orderAsc('sortOrder'),
         Query.limit(50),
@@ -145,10 +124,10 @@ function renderCard(listing, firstImageUrl) {
         <span class="condition-badge ${getConditionClass(listing.condition)}">${listing.condition === 'Foreign Used (Tokunbo)' ? 'Tokunbo' : listing.condition === 'Nigerian Used' ? 'Nigerian Used' : 'Brand New'}</span>
       </div>
       <div class="card-body">
-        <div class="card-title">${title} ${listing.color ? `(${listing.color})` : ''}</div>
+        <div class="card-title">${title}${listing.color ? ` (${listing.color})` : ''}</div>
         <div class="card-price">${formatPrice(listing.price)}</div>
         <div class="card-meta">
-          <span class="location">${listing.location || 'Nigerian'}</span>
+          <span class="location">${listing.location || 'Nigeria'}</span>
           <span>·</span>
           <span class="mileage">${formatMileage(listing.mileage)}</span>
         </div>
@@ -175,8 +154,7 @@ function showSkeletons() {
   resultsCount.textContent = 'Loading...';
 }
 
-function updateResultsCount(count, total) {
-  if (total === undefined) total = count;
+function updateResultsCount(count) {
   resultsCount.textContent = `${count} car${count !== 1 ? 's' : ''} match your search`;
 }
 
@@ -216,10 +194,8 @@ function filterListings(listings, filters) {
 
     if (filters.priceMin !== null && listing.price < filters.priceMin) return false;
     if (filters.priceMax !== null && listing.price > filters.priceMax) return false;
-
     if (filters.yearMin !== null && listing.year < filters.yearMin) return false;
     if (filters.yearMax !== null && listing.year > filters.yearMax) return false;
-
     if (filters.mileageMin !== null && listing.mileage < filters.mileageMin) return false;
     if (filters.mileageMax !== null && listing.mileage > filters.mileageMax) return false;
 
@@ -257,10 +233,9 @@ function updateChecklistCounts() {
   document.querySelectorAll('#makeChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
-    const tempFilters = { ...filters, makes: [] };
     const count = allListings.filter(l => {
       if (l.status !== 'available') return false;
-      if (checkbox.checked && l.make !== checkbox.value) return false;
+      if (checkbox.checked) return l.make === checkbox.value;
       return true;
     }).length;
     countEl.textContent = `(${count})`;
@@ -273,10 +248,31 @@ function updateChecklistCounts() {
     countEl.textContent = `(${count})`;
   });
 
+  document.querySelectorAll('#transmissionChecklist label').forEach(label => {
+    const checkbox = label.querySelector('input');
+    const countEl = label.querySelector('.count');
+    const count = allListings.filter(l => l.status === 'available' && l.transmission === checkbox.value).length;
+    countEl.textContent = `(${count})`;
+  });
+
   document.querySelectorAll('#bodyTypeChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
     const count = allListings.filter(l => l.status === 'available' && l.bodyType === checkbox.value).length;
+    countEl.textContent = `(${count})`;
+  });
+
+  document.querySelectorAll('#colorChecklist label').forEach(label => {
+    const checkbox = label.querySelector('input');
+    const countEl = label.querySelector('.count');
+    const count = allListings.filter(l => l.status === 'available' && l.color === checkbox.value).length;
+    countEl.textContent = `(${count})`;
+  });
+
+  document.querySelectorAll('#fuelChecklist label').forEach(label => {
+    const checkbox = label.querySelector('input');
+    const countEl = label.querySelector('.count');
+    const count = allListings.filter(l => l.status === 'available' && l.fuel === checkbox.value).length;
     countEl.textContent = `(${count})`;
   });
 }
@@ -287,7 +283,7 @@ async function applyFilters() {
   results = sortListings(results, sortSelect.value);
 
   filteredListings = results;
-  updateResultsCount(filteredListings.length, allListings.length);
+  updateResultsCount(filteredListings.length);
 
   if (filteredListings.length === 0) {
     listingsGrid.innerHTML = '';
@@ -298,7 +294,8 @@ async function applyFilters() {
 
   emptyState.style.display = 'none';
 
-  const displayListings = filteredListings.slice(0, PAGE_SIZE);
+  const showCount = Math.min(displayedCount > 0 ? displayedCount : PAGE_SIZE, filteredListings.length);
+  const displayListings = filteredListings.slice(0, showCount);
   const listingIds = displayListings.map(l => l.$id);
   const imagesMap = await getAllImagesMap(listingIds);
 
@@ -319,11 +316,8 @@ async function applyFilters() {
   updateChecklistCounts();
   updateMakeChips(results);
 
-  if (filteredListings.length > PAGE_SIZE) {
-    loadMoreBtn.style.display = 'flex';
-  } else {
-    loadMoreBtn.style.display = 'none';
-  }
+  const hasMoreToShow = displayedCount < filteredListings.length;
+  loadMoreBtn.style.display = hasMoreToShow || hasMore ? 'flex' : 'none';
 }
 
 function updateMakeChips(listings) {
@@ -336,13 +330,12 @@ function updateMakeChips(listings) {
   chipContainer.querySelectorAll('.filter-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const make = chip.dataset.make;
-      const checkboxes = document.querySelectorAll('#makeChecklist input[type="checkbox"]');
-      checkboxes.forEach(cb => {
-        if (cb.value === make) {
-          cb.checked = !cb.checked;
-        }
+      document.querySelectorAll('#makeChecklist input[type="checkbox"]').forEach(cb => {
+        if (cb.value === make) cb.checked = !cb.checked;
       });
       chip.classList.toggle('active');
+      displayedCount = PAGE_SIZE;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       applyFilters();
     });
   });
@@ -354,28 +347,28 @@ function buildChecklists() {
   const bodyTypes = [...new Set(allListings.filter(l => l.status === 'available').map(l => l.bodyType))].sort();
   const colors = [...new Set(allListings.filter(l => l.status === 'available').map(l => l.color))].sort();
 
-  const makeList = document.getElementById('makeChecklist');
-  makeList.innerHTML = makes.map(make => `
+  document.getElementById('makeChecklist').innerHTML = makes.map(make => `
     <label><input type="checkbox" value="${make}"> ${make} <span class="count"></span></label>
   `).join('');
 
-  const conditionList = document.getElementById('conditionChecklist');
-  conditionList.innerHTML = conditions.map(cond => `
+  document.getElementById('conditionChecklist').innerHTML = conditions.map(cond => `
     <label><input type="checkbox" value="${cond}"> ${cond} <span class="count"></span></label>
   `).join('');
 
-  const bodyTypeList = document.getElementById('bodyTypeChecklist');
-  bodyTypeList.innerHTML = bodyTypes.map(type => `
+  document.getElementById('bodyTypeChecklist').innerHTML = bodyTypes.map(type => `
     <label><input type="checkbox" value="${type}"> ${type.charAt(0).toUpperCase() + type.slice(1)} <span class="count"></span></label>
   `).join('');
 
-  const colorList = document.getElementById('colorChecklist');
-  colorList.innerHTML = colors.map(color => `
+  document.getElementById('colorChecklist').innerHTML = colors.map(color => `
     <label><input type="checkbox" value="${color}"> ${color} <span class="count"></span></label>
   `).join('');
 
   document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', applyFilters);
+    cb.addEventListener('change', () => {
+      displayedCount = PAGE_SIZE;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      applyFilters();
+    });
   });
 }
 
@@ -383,6 +376,14 @@ function setupPriceChips() {
   document.querySelectorAll('#priceChips .filter-chip, #quickPriceChips .filter-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       chip.classList.toggle('active');
+
+      const sameGroup = chip.closest('#priceChips, #quickPriceChips');
+      if (sameGroup) {
+        sameGroup.querySelectorAll('.filter-chip').forEach(c => {
+          if (c !== chip) c.classList.remove('active');
+        });
+      }
+
       if (chip.classList.contains('active')) {
         filterElements.priceMin.value = chip.dataset.min;
         filterElements.priceMax.value = chip.dataset.max;
@@ -390,6 +391,7 @@ function setupPriceChips() {
         filterElements.priceMin.value = '';
         filterElements.priceMax.value = '';
       }
+      displayedCount = PAGE_SIZE;
       applyFilters();
     });
   });
@@ -397,10 +399,22 @@ function setupPriceChips() {
 
 function setupFilterInputs() {
   Object.values(filterElements).forEach(el => {
-    el.addEventListener('input', debounce(applyFilters, 300));
+    el.addEventListener('input', debounce(() => {
+      deactivatePriceChips();
+      displayedCount = PAGE_SIZE;
+      applyFilters();
+    }, 300));
   });
 
-  sortSelect.addEventListener('change', applyFilters);
+  sortSelect.addEventListener('change', () => {
+    displayedCount = PAGE_SIZE;
+    applyFilters();
+  });
+}
+
+function deactivatePriceChips() {
+  document.querySelectorAll('#priceChips .filter-chip.active, #quickPriceChips .filter-chip.active')
+    .forEach(chip => chip.classList.remove('active'));
 }
 
 function debounce(fn, ms) {
@@ -424,6 +438,43 @@ function setupMobileFilters() {
     overlay.classList.add('open');
     panel.classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    content.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const sidebarCb = document.querySelector(`#filterSidebar input[value="${cb.value}"]`);
+        if (sidebarCb) {
+          sidebarCb.checked = cb.checked;
+          sidebarCb.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        applyFilters();
+      });
+    });
+
+    content.querySelectorAll('.filter-price-inputs input').forEach(input => {
+      input.addEventListener('input', debounce(() => {
+        const sidebarId = input.id.replace('filter', 'filter');
+        const sidebarInput = document.getElementById(input.id);
+        if (sidebarInput) sidebarInput.value = input.value;
+        displayedCount = PAGE_SIZE;
+        applyFilters();
+      }, 300));
+    });
+
+    content.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('active');
+        const sidebarChip = Array.from(document.querySelectorAll('#filterSidebar .filter-chip'))
+          .find(c => c.dataset.min === chip.dataset.min && c.dataset.max === chip.dataset.max);
+        if (sidebarChip) {
+          if (chip.classList.contains('active')) {
+            sidebarChip.classList.add('active');
+          } else {
+            sidebarChip.classList.remove('active');
+          }
+          sidebarChip.click();
+        }
+      });
+    });
   }
 
   function closePanel() {
@@ -442,6 +493,7 @@ function setupResetFilters() {
     document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('.filter-chip.active').forEach(chip => chip.classList.remove('active'));
     Object.values(filterElements).forEach(el => el.value = '');
+    displayedCount = PAGE_SIZE;
     applyFilters();
   });
 }
@@ -470,11 +522,13 @@ async function init() {
   try {
     const response = await fetchListings();
     allListings = response.documents;
-    lastDocument = allListings[allListings.length - 1];
+    lastDocument = allListings.length > 0 ? allListings[allListings.length - 1] : null;
 
     if (allListings.length < PAGE_SIZE) {
       hasMore = false;
     }
+
+    displayedCount = PAGE_SIZE;
 
     buildChecklists();
     setupPriceChips();
@@ -485,7 +539,6 @@ async function init() {
     await applyFilters();
 
     loadMoreBtn.addEventListener('click', fetchMoreListings);
-    loadMoreBtn.style.display = hasMore && allListings.length > 0 ? 'flex' : 'none';
   } catch (err) {
     console.error('Failed to load listings:', err);
     listingsGrid.innerHTML = `
