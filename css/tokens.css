@@ -1,31 +1,65 @@
 :root {
-  /* Color Palette - Professional/Trustworthy */
-  --color-brand: #0f172a;        /* Deep Navy */
-  --color-accent: #059669;       /* Professional Emerald (WhatsApp-adjacent) */
-  --color-bg: #f8fafc;           /* Light cool gray */
-  --color-surface: #ffffff;      /* White */
-  --color-text-main: #1e293b;    /* Dark Slate */
-  --color-text-muted: #64748b;   /* Slate Gray */
-  --color-border: #e2e8f0;       /* Light border */
+  --color-brand: #0a1628;
+  --color-brand-light: #1a2d4a;
+  --color-accent: #c44536;
+  --color-accent-hover: #a83a2e;
+  --color-whatsapp: #25d366;
+  --color-whatsapp-hover: #20bd5a;
 
-  /* Spacing Scale - 8px based */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #868e96;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
 
-  /* Typography */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --text-sm: 14px;
-  --text-base: 16px;
-  --text-lg: 18px;
-  --text-xl: 24px;
-  --text-2xl: 32px;
+  --status-available: #2b8a3e;
+  --status-available-bg: #d3f9d8;
+  --status-reserved: #e67700;
+  --status-reserved-bg: #fff3bf;
+  --status-sold: #868e96;
+  --status-sold-bg: #f1f3f5;
 
-  /* Elevation */
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --radius-lg: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  --text-xs: clamp(0.69rem, 0.67rem + 0.08vw, 0.75rem);
+  --text-sm: clamp(0.8rem, 0.78rem + 0.12vw, 0.875rem);
+  --text-base: clamp(0.94rem, 0.9rem + 0.18vw, 1rem);
+  --text-lg: clamp(1.13rem, 1.07rem + 0.28vw, 1.25rem);
+  --text-xl: clamp(1.35rem, 1.26rem + 0.42vw, 1.5rem);
+  --text-2xl: clamp(1.62rem, 1.5rem + 0.6vw, 1.875rem);
+  --text-3xl: clamp(1.94rem, 1.78rem + 0.82vw, 2.375rem);
+
+  --radius-sm: 4px;
   --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  --transition-fast: 150ms ease-out;
+  --transition-base: 200ms ease-out;
+  --transition-slow: 300ms ease-out;
+
+  --sidebar-width: 280px;
+  --header-height: 64px;
+  --max-width: 1280px;
 }

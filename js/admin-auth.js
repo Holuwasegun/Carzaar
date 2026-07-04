@@ -1,16 +1,43 @@
-import { auth } from '../js/firebase-client.js';
-import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { account } from './appwrite-client.js';
 
-const form = document.getElementById('login-form');
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-
+export async function login(email, password) {
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-    window.location.href = '/admin/listing-form.html';
-  } catch (error) {
-    document.getElementById('error').textContent = 'Login failed: ' + error.message;
+    await account.createEmailPasswordSession(email, password);
+    window.location.href = '/admin/dashboard.html';
+  } catch (err) {
+    throw new Error(err.message || 'Login failed. Check your credentials.');
   }
-});
+}
+
+export async function logout() {
+  try {
+    await account.deleteSession('current');
+  } catch (err) {
+    console.warn('Logout error:', err);
+  }
+  window.location.href = '/admin/login.html';
+}
+
+export function initAuthGuard() {
+  const currentPage = window.location.pathname;
+
+  account.get()
+    .then(user => {
+      if (currentPage.includes('login.html')) {
+        window.location.href = '/admin/dashboard.html';
+      }
+    })
+    .catch(() => {
+      if (!currentPage.includes('login.html')) {
+        window.location.href = '/admin/login.html';
+      }
+    });
+}
+
+export async function getCurrentUser() {
+  try {
+    return await account.get();
+  } catch {
+    return null;
+  }
+}

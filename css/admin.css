@@ -1,0 +1,86 @@
+.admin-header {
+  background: var(--color-brand);
+  color: white;
+  padding: 0 var(--space-4);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.admin-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.admin-header .logo {
+  color: white;
+}
+
+.admin-header .admin-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.admin-header .admin-nav a {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.admin-header .admin-nav a:hover {
+  color: white;
+  text-decoration: none;
+}
+
+.admin-main {
+  flex: 1;
+  padding: var(--space-6) 0;
+  min-height: calc(100vh - var(--header-height));
+}
+
+#listingForm {
+  max-width: 900px;
+}
+
+@media (max-width: 767px) {
+  #listingForm {
+    max-width: 100%;
+  }
+}
+
+.toast {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  z-index: 300;
+  transform: translateY(120%);
+  transition: transform var(--transition-base);
+  box-shadow: var(--shadow-lg);
+  max-width: 360px;
+}
+
+.toast.show {
+  transform: translateY(0);
+}
+
+.toast.success {
+  background: var(--status-available);
+}
+
+.toast.error {
+  background: #e03131;
+}

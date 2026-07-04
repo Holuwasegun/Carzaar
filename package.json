@@ -1,0 +1,13 @@
+{
+  "name": "carzaar",
+  "version": "1.0.0",
+  "description": "Carzaar — Nigerian car marketplace",
+  "type": "module",
+  "scripts": {
+    "prerender": "node scripts/prerender-listings.mjs",
+    "build": "npm run prerender"
+  },
+  "dependencies": {
+    "node-appwrite": "^12.0.0"
+  }
+}

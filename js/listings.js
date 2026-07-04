@@ -1,32 +1,505 @@
-import { db } from './firebase-client.js';
-import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { databases, databaseId, storage, Query } from './appwrite-client.js';
+
+const LISTINGS_COLLECTION = 'listings';
+const LISTING_IMAGES_COLLECTION = 'listing_images';
+const PAGE_SIZE = 12;
+const BUCKET_ID = 'car-images';
+
+let allListings = [];
+let filteredListings = [];
+let displayedCount = 0;
+let lastDocument = null;
+let hasMore = true;
+let isLoading = false;
+let activeFilters = {};
+
+const listingsGrid = document.getElementById('listingsGrid');
+const loadMoreBtn = document.getElementById('loadMore');
+const resultsCount = document.getElementById('resultsCount');
+const emptyState = document.getElementById('emptyState');
+const sortSelect = document.getElementById('sortSelect');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+const filterElements = {
+  location: document.getElementById('filterLocation'),
+  priceMin: document.getElementById('filterPriceMin'),
+  priceMax: document.getElementById('filterPriceMax'),
+  yearMin: document.getElementById('filterYearMin'),
+  yearMax: document.getElementById('filterYearMax'),
+  mileageMin: document.getElementById('filterMileageMin'),
+  mileageMax: document.getElementById('filterMileageMax'),
+};
+
+const QUICK_PRICE_CHIPS = [
+  { min: '', max: '3000000', label: 'Under ₦3M' },
+  { min: '3000000', max: '7000000', label: '₦3M – ₦7M' },
+  { min: '7000000', max: '15000000', label: '₦7M – ₦15M' },
+  { min: '15000000', max: '', label: '₦15M+' },
+];
 
 async function fetchListings() {
-  const grid = document.getElementById('listings');
+  const queries = [
+    Query.equal('status', 'available'),
+    Query.orderDesc('$createdAt'),
+    Query.limit(PAGE_SIZE),
+  ];
+
+  const response = await databases.listDocuments(databaseId, LISTINGS_COLLECTION, queries);
+  return response;
+}
+
+async function fetchMoreListings() {
+  if (!lastDocument || !hasMore || isLoading) return;
+
+  isLoading = true;
+  loadMoreBtn.textContent = 'Loading...';
+
   try {
-    const snapshot = await getDocs(query(collection(db, 'listings'), orderBy('created_at', 'desc')));
-    
-    if (snapshot.empty) {
-      grid.innerHTML = '<p>No cars available at the moment.</p>';
-      return;
+    const queries = [
+      Query.equal('status', 'available'),
+      Query.orderDesc('$createdAt'),
+      Query.limit(PAGE_SIZE),
+      Query.cursorAfter(lastDocument),
+    ];
+
+    const response = await databases.listDocuments(databaseId, LISTINGS_COLLECTION, queries);
+    const newDocs = response.documents;
+
+    if (newDocs.length < PAGE_SIZE) {
+      hasMore = false;
     }
 
-    grid.innerHTML = snapshot.docs.map(doc => {
-      const car = doc.data();
-      return `
-        <div class="card">
-          <img src="${car.imageUrl}" alt="${car.make}" style="width: 100%; height: 200px; object-fit: cover;">
-          <div class="listing-content">
-            <h2 style="font-size: var(--text-lg);">${car.make} ${car.model} (${car.year})</h2>
-            <p style="font-size: var(--text-xl); font-weight: 700; color: var(--color-accent); margin-bottom: var(--space-md);">N ${car.price.toLocaleString()}</p>
-            <a href="listings/detail.html?id=${doc.id}" class="btn btn-primary" style="width:100%;">View Details</a>
-          </div>
-        </div>
-      `;
-    }).join('');
-  } catch (error) {
-    console.error("Error:", error);
-    grid.innerHTML = '<p>Error loading listings.</p>';
+    allListings = [...allListings, ...newDocs];
+    lastDocument = newDocs[newDocs.length - 1];
+    displayedCount = allListings.length;
+    applyFilters();
+  } catch (err) {
+    console.error('Load more error:', err);
+    showToast('Failed to load more listings', 'error');
+  } finally {
+    isLoading = false;
+    loadMoreBtn.textContent = 'Load more cars';
   }
 }
-fetchListings();
+
+async function getListingImages(listingId) {
+  try {
+    const response = await databases.listDocuments(databaseId, LISTING_IMAGES_COLLECTION, [
+      Query.equal('listingId', listingId),
+      Query.orderAsc('sortOrder'),
+    ]);
+    return response.documents;
+  } catch {
+    return [];
+  }
+}
+
+async function getAllImagesMap(listingIds) {
+  const map = {};
+  const chunkSize = 25;
+  for (let i = 0; i < listingIds.length; i += chunkSize) {
+    const chunk = listingIds.slice(i, i + chunkSize);
+    try {
+      const response = await databases.listDocuments(databaseId, LISTING_IMAGES_COLLECTION, [
+        Query.equal('listingId', chunk),
+        Query.orderAsc('sortOrder'),
+        Query.limit(50),
+      ]);
+      for (const doc of response.documents) {
+        if (!map[doc.listingId]) map[doc.listingId] = [];
+        map[doc.listingId].push(doc);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch images chunk:', err);
+    }
+  }
+  return map;
+}
+
+function formatPrice(price) {
+  return '₦' + Number(price).toLocaleString('en-NG');
+}
+
+function formatMileage(km) {
+  return Number(km).toLocaleString('en-NG') + ' km';
+}
+
+function getConditionClass(condition) {
+  if (condition === 'Brand New') return 'brand-new';
+  if (condition === 'Nigerian Used') return 'nigerian-used';
+  return 'foreign-used';
+}
+
+function getListingTitle(listing) {
+  return `${listing.make} ${listing.model} ${listing.year}`;
+}
+
+function renderCard(listing, firstImageUrl) {
+  const title = getListingTitle(listing);
+  const imgSrc = firstImageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23e9ecef"%3E%3Crect width="400" height="300"/%3E%3Ctext x="50%" y="50%" fill="%23adb5bd" font-size="16" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+
+  return `
+    <article class="card" role="listitem" data-id="${listing.$id}" onclick="window.location.href='/listings/detail.html?id=${listing.$id}'">
+      <div class="card-image">
+        <img src="${imgSrc}" alt="${title}" loading="lazy">
+        <span class="condition-badge ${getConditionClass(listing.condition)}">${listing.condition === 'Foreign Used (Tokunbo)' ? 'Tokunbo' : listing.condition === 'Nigerian Used' ? 'Nigerian Used' : 'Brand New'}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${title} ${listing.color ? `(${listing.color})` : ''}</div>
+        <div class="card-price">${formatPrice(listing.price)}</div>
+        <div class="card-meta">
+          <span class="location">${listing.location || 'Nigerian'}</span>
+          <span>·</span>
+          <span class="mileage">${formatMileage(listing.mileage)}</span>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderSkeletons() {
+  return Array(6).fill(`
+    <div class="skeleton-card" role="presentation" aria-hidden="true">
+      <div class="skeleton skeleton-image"></div>
+      <div class="skeleton-body">
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line" style="height:24px;width:50%"></div>
+        <div class="skeleton skeleton-line"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showSkeletons() {
+  listingsGrid.innerHTML = renderSkeletons();
+  resultsCount.textContent = 'Loading...';
+}
+
+function updateResultsCount(count, total) {
+  if (total === undefined) total = count;
+  resultsCount.textContent = `${count} car${count !== 1 ? 's' : ''} match your search`;
+}
+
+function getFilterState() {
+  const makeChecks = document.querySelectorAll('#makeChecklist input:checked');
+  const conditionChecks = document.querySelectorAll('#conditionChecklist input:checked');
+  const transmissionChecks = document.querySelectorAll('#transmissionChecklist input:checked');
+  const bodyTypeChecks = document.querySelectorAll('#bodyTypeChecklist input:checked');
+  const colorChecks = document.querySelectorAll('#colorChecklist input:checked');
+  const fuelChecks = document.querySelectorAll('#fuelChecklist input:checked');
+
+  return {
+    location: filterElements.location.value.toLowerCase().trim(),
+    priceMin: filterElements.priceMin.value ? Number(filterElements.priceMin.value) : null,
+    priceMax: filterElements.priceMax.value ? Number(filterElements.priceMax.value) : null,
+    yearMin: filterElements.yearMin.value ? Number(filterElements.yearMin.value) : null,
+    yearMax: filterElements.yearMax.value ? Number(filterElements.yearMax.value) : null,
+    mileageMin: filterElements.mileageMin.value ? Number(filterElements.mileageMin.value) : null,
+    mileageMax: filterElements.mileageMax.value ? Number(filterElements.mileageMax.value) : null,
+    makes: Array.from(makeChecks).map(c => c.value),
+    conditions: Array.from(conditionChecks).map(c => c.value),
+    transmissions: Array.from(transmissionChecks).map(c => c.value),
+    bodyTypes: Array.from(bodyTypeChecks).map(c => c.value),
+    colors: Array.from(colorChecks).map(c => c.value),
+    fuels: Array.from(fuelChecks).map(c => c.value),
+  };
+}
+
+function filterListings(listings, filters) {
+  return listings.filter(listing => {
+    if (listing.status !== 'available') return false;
+
+    if (filters.location) {
+      const loc = (listing.location || '').toLowerCase();
+      if (!loc.includes(filters.location)) return false;
+    }
+
+    if (filters.priceMin !== null && listing.price < filters.priceMin) return false;
+    if (filters.priceMax !== null && listing.price > filters.priceMax) return false;
+
+    if (filters.yearMin !== null && listing.year < filters.yearMin) return false;
+    if (filters.yearMax !== null && listing.year > filters.yearMax) return false;
+
+    if (filters.mileageMin !== null && listing.mileage < filters.mileageMin) return false;
+    if (filters.mileageMax !== null && listing.mileage > filters.mileageMax) return false;
+
+    if (filters.makes.length && !filters.makes.includes(listing.make)) return false;
+    if (filters.conditions.length && !filters.conditions.includes(listing.condition)) return false;
+    if (filters.transmissions.length && !filters.transmissions.includes(listing.transmission)) return false;
+    if (filters.bodyTypes.length && !filters.bodyTypes.includes(listing.bodyType)) return false;
+    if (filters.colors.length && !filters.colors.includes(listing.color)) return false;
+    if (filters.fuels.length && !filters.fuels.includes(listing.fuel)) return false;
+
+    return true;
+  });
+}
+
+function sortListings(listings, sortKey) {
+  const sorted = [...listings];
+  switch (sortKey) {
+    case 'price-asc':
+      sorted.sort((a, b) => a.price - b.price);
+      break;
+    case 'price-desc':
+      sorted.sort((a, b) => b.price - a.price);
+      break;
+    case 'newest':
+    default:
+      sorted.sort((a, b) => new Date(b.$createdAt) - new Date(a.$createdAt));
+      break;
+  }
+  return sorted;
+}
+
+function updateChecklistCounts() {
+  const filters = getFilterState();
+
+  document.querySelectorAll('#makeChecklist label').forEach(label => {
+    const checkbox = label.querySelector('input');
+    const countEl = label.querySelector('.count');
+    const tempFilters = { ...filters, makes: [] };
+    const count = allListings.filter(l => {
+      if (l.status !== 'available') return false;
+      if (checkbox.checked && l.make !== checkbox.value) return false;
+      return true;
+    }).length;
+    countEl.textContent = `(${count})`;
+  });
+
+  document.querySelectorAll('#conditionChecklist label').forEach(label => {
+    const checkbox = label.querySelector('input');
+    const countEl = label.querySelector('.count');
+    const count = allListings.filter(l => l.status === 'available' && l.condition === checkbox.value).length;
+    countEl.textContent = `(${count})`;
+  });
+
+  document.querySelectorAll('#bodyTypeChecklist label').forEach(label => {
+    const checkbox = label.querySelector('input');
+    const countEl = label.querySelector('.count');
+    const count = allListings.filter(l => l.status === 'available' && l.bodyType === checkbox.value).length;
+    countEl.textContent = `(${count})`;
+  });
+}
+
+async function applyFilters() {
+  const filters = getFilterState();
+  let results = filterListings(allListings, filters);
+  results = sortListings(results, sortSelect.value);
+
+  filteredListings = results;
+  updateResultsCount(filteredListings.length, allListings.length);
+
+  if (filteredListings.length === 0) {
+    listingsGrid.innerHTML = '';
+    emptyState.style.display = 'flex';
+    loadMoreBtn.style.display = 'none';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  const displayListings = filteredListings.slice(0, PAGE_SIZE);
+  const listingIds = displayListings.map(l => l.$id);
+  const imagesMap = await getAllImagesMap(listingIds);
+
+  let html = '';
+  for (const listing of displayListings) {
+    const images = imagesMap[listing.$id] || [];
+    const firstImage = images.length > 0 ? images[0] : null;
+    let imgUrl = null;
+    if (firstImage) {
+      try {
+        imgUrl = storage.getFileView(BUCKET_ID, firstImage.storageFileId);
+      } catch {}
+    }
+    html += renderCard(listing, imgUrl);
+  }
+
+  listingsGrid.innerHTML = html;
+  updateChecklistCounts();
+  updateMakeChips(results);
+
+  if (filteredListings.length > PAGE_SIZE) {
+    loadMoreBtn.style.display = 'flex';
+  } else {
+    loadMoreBtn.style.display = 'none';
+  }
+}
+
+function updateMakeChips(listings) {
+  const chipContainer = document.getElementById('quickMakeChips');
+  const makes = [...new Set(listings.filter(l => l.status === 'available').map(l => l.make))].slice(0, 6);
+  chipContainer.innerHTML = makes.map(make => `
+    <button class="filter-chip" data-make="${make}">${make}</button>
+  `).join('');
+
+  chipContainer.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const make = chip.dataset.make;
+      const checkboxes = document.querySelectorAll('#makeChecklist input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        if (cb.value === make) {
+          cb.checked = !cb.checked;
+        }
+      });
+      chip.classList.toggle('active');
+      applyFilters();
+    });
+  });
+}
+
+function buildChecklists() {
+  const makes = [...new Set(allListings.filter(l => l.status === 'available').map(l => l.make))].sort();
+  const conditions = ['Brand New', 'Nigerian Used', 'Foreign Used (Tokunbo)'];
+  const bodyTypes = [...new Set(allListings.filter(l => l.status === 'available').map(l => l.bodyType))].sort();
+  const colors = [...new Set(allListings.filter(l => l.status === 'available').map(l => l.color))].sort();
+
+  const makeList = document.getElementById('makeChecklist');
+  makeList.innerHTML = makes.map(make => `
+    <label><input type="checkbox" value="${make}"> ${make} <span class="count"></span></label>
+  `).join('');
+
+  const conditionList = document.getElementById('conditionChecklist');
+  conditionList.innerHTML = conditions.map(cond => `
+    <label><input type="checkbox" value="${cond}"> ${cond} <span class="count"></span></label>
+  `).join('');
+
+  const bodyTypeList = document.getElementById('bodyTypeChecklist');
+  bodyTypeList.innerHTML = bodyTypes.map(type => `
+    <label><input type="checkbox" value="${type}"> ${type.charAt(0).toUpperCase() + type.slice(1)} <span class="count"></span></label>
+  `).join('');
+
+  const colorList = document.getElementById('colorChecklist');
+  colorList.innerHTML = colors.map(color => `
+    <label><input type="checkbox" value="${color}"> ${color} <span class="count"></span></label>
+  `).join('');
+
+  document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', applyFilters);
+  });
+}
+
+function setupPriceChips() {
+  document.querySelectorAll('#priceChips .filter-chip, #quickPriceChips .filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      if (chip.classList.contains('active')) {
+        filterElements.priceMin.value = chip.dataset.min;
+        filterElements.priceMax.value = chip.dataset.max;
+      } else {
+        filterElements.priceMin.value = '';
+        filterElements.priceMax.value = '';
+      }
+      applyFilters();
+    });
+  });
+}
+
+function setupFilterInputs() {
+  Object.values(filterElements).forEach(el => {
+    el.addEventListener('input', debounce(applyFilters, 300));
+  });
+
+  sortSelect.addEventListener('change', applyFilters);
+}
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
+function setupMobileFilters() {
+  const toggleBtn = document.getElementById('filtersToggle');
+  const overlay = document.getElementById('mobileFilterOverlay');
+  const panel = document.getElementById('mobileFilterPanel');
+  const closeBtn = document.getElementById('mobileFilterClose');
+  const content = document.getElementById('mobileFilterContent');
+
+  function openPanel() {
+    const sidebar = document.getElementById('filterSidebar');
+    content.innerHTML = sidebar.innerHTML;
+    overlay.classList.add('open');
+    panel.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePanel() {
+    overlay.classList.remove('open');
+    panel.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  toggleBtn.addEventListener('click', openPanel);
+  closeBtn.addEventListener('click', closePanel);
+  overlay.addEventListener('click', closePanel);
+}
+
+function setupResetFilters() {
+  resetFiltersBtn.addEventListener('click', () => {
+    document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.filter-chip.active').forEach(chip => chip.classList.remove('active'));
+    Object.values(filterElements).forEach(el => el.value = '');
+    applyFilters();
+  });
+}
+
+function showToast(message, type) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  });
+}
+
+async function init() {
+  showSkeletons();
+
+  try {
+    const response = await fetchListings();
+    allListings = response.documents;
+    lastDocument = allListings[allListings.length - 1];
+
+    if (allListings.length < PAGE_SIZE) {
+      hasMore = false;
+    }
+
+    buildChecklists();
+    setupPriceChips();
+    setupFilterInputs();
+    setupMobileFilters();
+    setupResetFilters();
+
+    await applyFilters();
+
+    loadMoreBtn.addEventListener('click', fetchMoreListings);
+    loadMoreBtn.style.display = hasMore && allListings.length > 0 ? 'flex' : 'none';
+  } catch (err) {
+    console.error('Failed to load listings:', err);
+    listingsGrid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h3 class="empty-state-title">Unable to load listings</h3>
+        <p class="empty-state-text">Please check your connection and try again.</p>
+        <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+      </div>
+    `;
+    resultsCount.textContent = 'Error loading listings';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
