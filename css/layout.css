@@ -4,9 +4,15 @@
   padding: 0 var(--space-4);
 }
 
-@media (max-width: 360px) {
+@media (max-width: 480px) {
   .container {
     padding: 0 var(--space-3);
+  }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding: 0 var(--space-2);
   }
 }
 
@@ -150,6 +156,15 @@
   color: var(--gray-700);
   transition: all var(--transition-fast);
   cursor: pointer;
+  min-height: 34px;
+}
+
+@media (max-width: 480px) {
+  .filter-chip {
+    min-height: 38px;
+    font-size: 0.75rem;
+    padding: var(--space-1) var(--space-3);
+  }
 }
 
 .filter-chip:hover,
@@ -237,6 +252,13 @@
   padding-bottom: var(--space-10);
 }
 
+@media (max-width: 480px) {
+  .detail-layout {
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+  }
+}
+
 @media (min-width: 768px) {
   .detail-layout {
     grid-template-columns: 1fr 360px;
@@ -251,6 +273,12 @@
 
 .detail-gallery {
   grid-column: 1 / -1;
+}
+
+@media (max-width: 480px) {
+  .detail-gallery .image-gallery {
+    border-radius: var(--radius-md);
+  }
 }
 
 @media (min-width: 768px) {
@@ -285,6 +313,12 @@
   margin-bottom: var(--space-7);
 }
 
+@media (max-width: 480px) {
+  .detail-section {
+    margin-bottom: var(--space-5);
+  }
+}
+
 .detail-section-title {
   font-size: var(--text-lg);
   font-weight: 600;
@@ -294,10 +328,23 @@
   border-bottom: 2px solid var(--gray-200);
 }
 
+@media (max-width: 480px) {
+  .detail-section-title {
+    font-size: clamp(0.95rem, 0.9rem + 0.25vw, 1.05rem);
+    margin-bottom: var(--space-3);
+  }
+}
+
 .specs-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-3);
+}
+
+@media (max-width: 360px) {
+  .specs-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 560px) {
@@ -312,6 +359,12 @@
   border-radius: var(--radius-md);
 }
 
+@media (max-width: 480px) {
+  .spec-item {
+    padding: var(--space-2) var(--space-2);
+  }
+}
+
 .spec-item-label {
   font-size: var(--text-xs);
   color: var(--gray-600);
@@ -324,6 +377,12 @@
   font-weight: 500;
   color: var(--gray-900);
   margin-top: var(--space-1);
+}
+
+@media (max-width: 480px) {
+  .spec-item-value {
+    font-size: clamp(0.78rem, 0.75rem + 0.15vw, 0.8rem);
+  }
 }
 
 .features-list {
@@ -392,6 +451,14 @@
   -webkit-overflow-scrolling: touch;
   padding: var(--space-5);
   padding-top: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .mobile-filter-panel {
+    max-height: 85vh;
+    padding: var(--space-4);
+    padding-top: var(--space-3);
+  }
 }
 
 .mobile-filter-panel.open {

@@ -48,7 +48,7 @@ async function loadListings() {
         <td style="font-weight:600">${formatPrice(listing.price)}</td>
         <td>${getStatusBadge(listing.status)}</td>
         <td style="font-size:var(--text-sm);color:var(--gray-600)">${listing.viewCount || 0}</td>
-        <td style="font-size:var(--text-sm);color:var(--gray-600)">${formatDate(listing.$createdAt)}</td>
+        <td style="font-size:var(--text-sm);color:var(--gray-600)">${listing.whatsappClickCount || 0}</td>
         <td>
           <div style="display:flex;gap:var(--space-2)">
             <a href="/admin/listing-form.html?id=${listing.$id}" class="btn btn-sm btn-secondary">Edit</a>

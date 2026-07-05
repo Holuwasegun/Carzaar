@@ -154,9 +154,6 @@ function renderListing(listing) {
     featuresList.innerHTML = '<span style="font-size:var(--text-sm);color:var(--gray-500)">No features listed</span>';
   }
 
-  document.getElementById('detailViewCount').textContent = `${listing.viewCount || 0} views`;
-  document.getElementById('detailClickCount').textContent = `${listing.whatsappClickCount || 0} clicks`;
-
   setupWhatsAppButton(listing);
 }
 

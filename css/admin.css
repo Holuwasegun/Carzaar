@@ -55,6 +55,18 @@
   #listingForm {
     max-width: 100%;
   }
+  .admin-form-grid {
+    gap: var(--space-3);
+  }
+  .admin-main {
+    padding: var(--space-4) 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-form-grid .form-group {
+    grid-column: 1 / -1 !important;
+  }
 }
 
 .toast {
@@ -101,12 +113,18 @@
     flex-wrap: nowrap;
     gap: var(--space-1);
   }
+  .admin-table td:last-child .btn {
+    min-height: 28px;
+  }
 }
 
 @media (max-width: 420px) {
   .admin-table th:nth-child(2),
   .admin-table td:nth-child(2) {
     display: none;
+  }
+  .admin-table td:first-child strong {
+    font-size: var(--text-xs);
   }
 }
 
@@ -117,5 +135,9 @@
   .admin-header .admin-nav .btn {
     font-size: 11px;
     padding: var(--space-1) var(--space-2);
+  }
+  .admin-header .admin-nav a,
+  .admin-header .admin-nav .btn {
+    min-height: 32px;
   }
 }
