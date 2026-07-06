@@ -6,8 +6,6 @@ export async function incrementCounter(listingId, field) {
   if (!listingId || !field) return;
 
   try {
-    const body = JSON.stringify({ listingId, field });
-
     const response = await fetch(
       `${endpoint}/functions/${APPWRITE_CONFIG.functionId}/executions`,
       {
@@ -17,10 +15,8 @@ export async function incrementCounter(listingId, field) {
           'X-Appwrite-Project': projectId,
         },
         body: JSON.stringify({
-          body,
+          body: JSON.stringify({ listingId, field }),
           async: true,
-          path: '/',
-          method: 'POST',
         }),
       }
     );

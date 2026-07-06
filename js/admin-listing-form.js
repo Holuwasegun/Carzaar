@@ -57,7 +57,7 @@ function setupImageUpload() {
       validFiles.push(file);
     }
 
-    const totalImages = existingImages.length + validFiles.length;
+    const totalImages = existingImages.length + selectedFiles.length + validFiles.length;
     if (totalImages > MAX_IMAGES) {
       const allowed = MAX_IMAGES - existingImages.length;
       errorEl.textContent = `Maximum ${MAX_IMAGES} images allowed. You can add ${allowed} more.`;
@@ -334,7 +334,7 @@ async function loadExistingListing(listingId) {
     document.getElementById('accidentHistory').value = listing.accidentHistory || 'unknown';
     document.getElementById('documentationStatus').value = listing.documentationStatus || 'registered_valid_papers';
     document.getElementById('serviceHistoryAvailable').checked = listing.serviceHistoryAvailable || false;
-    document.getElementById('hasSpareKey').checked = listing.hasSpareKey !== false;
+    document.getElementById('hasSpareKey').checked = listing.hasSpareKey === true;
     document.getElementById('warrantyRemaining').checked = listing.warrantyRemaining || false;
 
     if (listing.features && listing.features.length > 0) {

@@ -138,7 +138,6 @@ function renderListing(listing) {
     { label: 'Spare Key', value: listing.hasSpareKey ? 'Yes' : 'No' },
     { label: 'Documentation', value: formatDocumentationStatus(listing.documentationStatus) },
     { label: 'Warranty Remaining', value: listing.warrantyRemaining ? 'Yes' : 'No' },
-    { label: 'Drivetrain', value: listing.drivetrain.toUpperCase() },
   ];
   historySpecs.innerHTML = historyItems.map(h => `
     <div class="spec-item">

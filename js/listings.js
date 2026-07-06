@@ -59,7 +59,7 @@ async function fetchMoreListings() {
     allListings = [...allListings, ...newDocs];
     lastDocument = newDocs.length > 0 ? newDocs[newDocs.length - 1] : null;
 
-    displayedCount += PAGE_SIZE;
+    displayedCount += newDocs.length;
     await applyFilters();
   } catch (err) {
     console.error('Load more error:', err);
@@ -230,10 +230,7 @@ function updateChecklistCounts() {
   document.querySelectorAll('#makeChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
-    const count = allListings.filter(l => {
-      if (checkbox.checked) return l.make === checkbox.value;
-      return true;
-    }).length;
+    const count = allListings.filter(l => l.make === checkbox.value).length;
     countEl.textContent = `(${count})`;
   });
 
@@ -448,7 +445,6 @@ function setupMobileFilters() {
 
     content.querySelectorAll('.filter-price-inputs input').forEach(input => {
       input.addEventListener('input', debounce(() => {
-        const sidebarId = input.id.replace('filter', 'filter');
         const sidebarInput = document.getElementById(input.id);
         if (sidebarInput) sidebarInput.value = input.value;
         displayedCount = PAGE_SIZE;
