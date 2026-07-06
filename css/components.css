@@ -82,6 +82,14 @@
   border-color: var(--color-whatsapp-hover);
 }
 
+.btn-whatsapp:disabled {
+  background: var(--gray-400);
+  border-color: var(--gray-400);
+  color: var(--gray-600);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .btn-secondary {
   background: white;
   color: var(--gray-700);
