@@ -945,7 +945,8 @@ input[type="file"].form-input {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
   z-index: 300;
   align-items: center;
   justify-content: center;
@@ -957,19 +958,21 @@ input[type="file"].form-input {
 }
 
 .sell-modal {
+  position: relative;
   background: white;
-  border-radius: var(--radius-xl);
-  padding: var(--space-6);
+  border-radius: 20px;
   width: 100%;
-  max-width: 420px;
-  box-shadow: var(--shadow-xl);
-  animation: modalIn var(--transition-slow) ease-out;
+  max-width: 440px;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
+  animation: sellModalIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-@keyframes modalIn {
+@keyframes sellModalIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: scale(0.92) translateY(16px);
   }
   to {
     opacity: 1;
@@ -977,37 +980,233 @@ input[type="file"].form-input {
   }
 }
 
-.sell-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-1);
-}
-
-.sell-modal-header h3 {
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--color-brand);
-}
-
 .sell-modal-close {
-  font-size: var(--text-2xl);
-  color: var(--gray-500);
-  cursor: pointer;
-  padding: var(--space-2);
-  line-height: 1;
-  min-width: 44px;
-  min-height: 44px;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
+  background: var(--gray-100);
   border: none;
-  transition: color var(--transition-fast);
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .sell-modal-close:hover {
+  background: var(--gray-200);
+  color: var(--gray-800);
+}
+
+.sell-modal-hero {
+  text-align: center;
+  padding: var(--space-8) var(--space-6) var(--space-5);
+  background: linear-gradient(180deg, #f8fafc 0%, white 100%);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.sell-modal-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--color-brand), #1a2d4e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+  color: white;
+}
+
+.sell-modal-title {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--color-brand);
+  margin-bottom: var(--space-2);
+  letter-spacing: -0.02em;
+}
+
+.sell-modal-subtitle {
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+  line-height: 1.5;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.sell-form {
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sell-input-group {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  background: white;
+}
+
+.sell-input-group:focus-within {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(10, 22, 40, 0.08);
+}
+
+.sell-input-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  flex-shrink: 0;
+  color: var(--gray-400);
+  background: var(--gray-50);
+  border-right: 1px solid var(--gray-200);
+  transition: color var(--transition-fast);
+}
+
+.sell-input-group:focus-within .sell-input-icon {
+  color: var(--color-brand);
+  background: #f1f3f5;
+}
+
+.sell-input-field {
+  flex: 1;
+  padding: var(--space-1) var(--space-3);
+}
+
+.sell-input-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1px;
+}
+
+.sell-input-field input {
+  width: 100%;
+  border: none;
+  background: none;
+  font-size: var(--text-sm);
   color: var(--gray-900);
+  padding: var(--space-1) 0;
+  outline: none;
+  font-family: inherit;
+}
+
+.sell-input-field input::placeholder {
+  color: var(--gray-300);
+}
+
+.sell-preview {
+  margin-top: var(--space-1);
+  padding: var(--space-3) var(--space-3);
+  background: #f8fafc;
+  border: 1px dashed var(--gray-200);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+}
+
+.sell-preview--active {
+  background: #f0fdf4;
+  border-color: #86efac;
+  border-style: solid;
+}
+
+.sell-preview-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-400);
+  margin-bottom: var(--space-1);
+}
+
+.sell-preview--active .sell-preview-label {
+  color: #16a34a;
+}
+
+.sell-preview-text {
+  font-size: 13px;
+  color: var(--gray-500);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.sell-preview--active .sell-preview-text {
+  color: var(--gray-700);
+  font-style: normal;
+}
+
+.sell-submit {
+  margin-top: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 14px var(--space-5);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: #25D366;
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  min-height: 52px;
+}
+
+.sell-submit:hover:not(:disabled) {
+  background: #1da851;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35);
+}
+
+.sell-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.sell-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.sell-submit-text {
+  transition: opacity var(--transition-fast);
+}
+
+.sell-submit:disabled .sell-submit-text {
+  opacity: 0.6;
+}
+
+.sell-submit-loader {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+}
+
+.sell-submit-loader.active {
+  display: inline-block;
+  animation: sellSpin 0.6s linear infinite;
+}
+
+@keyframes sellSpin {
+  to { transform: rotate(360deg); }
 }
 
 .sell-link {
