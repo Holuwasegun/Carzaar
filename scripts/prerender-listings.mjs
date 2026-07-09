@@ -28,18 +28,8 @@ const client = new Client()
 
 const databases = new Databases(client);
 
-function escapeHtml(str) {
-  if (typeof str !== 'string') return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function encodeUri(str) {
-  if (typeof str !== 'string') return '';
-  return encodeURIComponent(str);
-}
-
 function getImageUrl(storageFileId) {
-  return `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${encodeUri(storageFileId)}/view?project=${encodeUri(APPWRITE_PROJECT_ID)}`;
+  return `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${storageFileId}/view?project=${APPWRITE_PROJECT_ID}`;
 }
 
 function formatPrice(price) {
@@ -47,17 +37,8 @@ function formatPrice(price) {
 }
 
 function generateListingPage(listing, imageUrl) {
-  const safeMake = escapeHtml(listing.make);
-  const safeModel = escapeHtml(listing.model);
-  const safeYear = escapeHtml(String(listing.year));
-  const safeLocation = escapeHtml(listing.location || 'Nigeria');
-  const safeCondition = escapeHtml(listing.condition);
-  const safePrice = escapeHtml(formatPrice(listing.price));
-  const safeMileage = listing.mileage ? listing.mileage.toLocaleString('en-NG') + ' km' : '';
-  const safeId = encodeUri(listing.$id);
-
-  const title = `${safeMake} ${safeModel} ${safeYear} - ${safePrice}`;
-  const description = `${safeMake} ${safeModel} ${safeYear} in ${safeLocation}. ${safeCondition}.${safeMileage ? ' ' + escapeHtml(safeMileage) + '.' : ''} Price: ${safePrice}.`;
+  const title = `${listing.make} ${listing.model} ${listing.year} - ${formatPrice(listing.price)}`;
+  const description = `${listing.make} ${listing.model} ${listing.year} in ${listing.location || 'Nigeria'}. ${listing.condition}. ${listing.mileage ? listing.mileage.toLocaleString() + ' km' : ''}. Price: ${formatPrice(listing.price)}.`;
 
   const ogImage = imageUrl || `${SITE_URL}/og-default.jpg`;
 
@@ -67,44 +48,22 @@ function generateListingPage(listing, imageUrl) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title} — Carzaar</title>
-  <meta name="description" content="${description}">
+  <meta name="description" content="${description.replace(/"/g, '&quot;')}">
   <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${description}">
+  <meta property="og:description" content="${description.replace(/"/g, '&quot;')}">
   <meta property="og:image" content="${ogImage}">
-  <meta property="og:url" content="${SITE_URL}/listings/detail.html?id=${safeId}">
+  <meta property="og:url" content="${SITE_URL}/listings/detail.html?id=${listing.$id}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Carzaar">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="${SITE_URL}/listings/detail.html?id=${safeId}">
-  <meta http-equiv="refresh" content="0;url=${SITE_URL}/listings/detail.html?id=${safeId}">
+  <link rel="canonical" href="${SITE_URL}/listings/detail.html?id=${listing.$id}">
+  <meta http-equiv="refresh" content="0;url=${SITE_URL}/listings/detail.html?id=${listing.$id}">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>C</text></svg>">
 </head>
 <body>
-  <script>window.location.href='${SITE_URL}/listings/detail.html?id=${safeId}';</script>
+  <script>window.location.href='${SITE_URL}/listings/detail.html?id=${listing.$id}';</script>
 </body>
 </html>`;
-}
-
-async function fetchAllImagesForListings(ids) {
-  const imagesMap = {};
-  const chunkSize = 25;
-  for (let i = 0; i < ids.length; i += chunkSize) {
-    const chunk = ids.slice(i, i + chunkSize);
-    try {
-      const response = await databases.listDocuments(APPWRITE_DATABASE_ID, 'listing_images', [
-        Query.equal('listingId', chunk),
-        Query.orderAsc('sortOrder'),
-        Query.limit(50),
-      ]);
-      for (const doc of response.documents || []) {
-        if (!imagesMap[doc.listingId]) imagesMap[doc.listingId] = [];
-        imagesMap[doc.listingId].push(doc);
-      }
-    } catch (err) {
-      console.warn('  Failed to fetch images chunk:', err);
-    }
-  }
-  return imagesMap;
 }
 
 async function main() {
@@ -114,21 +73,26 @@ async function main() {
 
   console.log('Fetching listings...');
   const data = await databases.listDocuments(APPWRITE_DATABASE_ID, 'listings', [
+    Query.equal('status', 'available'),
     Query.limit(100),
   ]);
   const listings = data.documents || [];
 
-  console.log(`Found ${listings.length} listings. Fetching images...`);
-
-  const ids = listings.map(l => l.$id);
-  const imagesMap = await fetchAllImagesForListings(ids);
-
-  console.log('Generating pages...');
+  console.log(`Found ${listings.length} listings. Generating pages...`);
 
   for (const listing of listings) {
-    const images = imagesMap[listing.$id] || [];
-    const firstImage = images.length > 0 ? images[0] : null;
-    const imageUrl = firstImage ? getImageUrl(firstImage.storageFileId) : null;
+    let imageUrl = null;
+    try {
+      const imagesData = await databases.listDocuments(APPWRITE_DATABASE_ID, 'listing_images', [
+        Query.equal('listingId', listing.$id),
+        Query.orderAsc('sortOrder'),
+      ]);
+      const images = imagesData.documents || [];
+      const firstImage = images.length > 0 ? images[0] : null;
+      imageUrl = firstImage ? getImageUrl(firstImage.storageFileId) : null;
+    } catch (err) {
+      console.warn(`  Failed to fetch images for ${listing.$id}: ${err.message}`);
+    }
 
     const html = generateListingPage(listing, imageUrl);
     const filePath = join(LISTINGS_DIR, `${listing.$id}.html`);

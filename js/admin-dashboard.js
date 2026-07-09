@@ -5,11 +5,6 @@ const LISTINGS_COLLECTION = 'listings';
 
 let confirmCallback = null;
 
-function escapeHtml(str) {
-  if (typeof str !== 'string') return String(str);
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
 function formatPrice(price) {
   return '₦' + Number(price).toLocaleString('en-NG');
 }
@@ -44,17 +39,11 @@ async function loadListings() {
       return;
     }
 
-    tbody.innerHTML = response.documents.map(listing => {
-      const safeMake = escapeHtml(listing.make);
-      const safeModel = escapeHtml(listing.model);
-      const safeYear = escapeHtml(String(listing.year));
-      const safeLocation = escapeHtml(listing.location || 'Nigeria');
-      const safeId = escapeHtml(listing.$id);
-      return `
+    tbody.innerHTML = response.documents.map(listing => `
       <tr>
         <td>
-          <strong>${safeMake} ${safeModel}</strong>
-          <br><span style="font-size:var(--text-xs);color:var(--gray-500)">${safeYear} · ${safeLocation}</span>
+          <strong>${listing.make} ${listing.model}</strong>
+          <br><span style="font-size:var(--text-xs);color:var(--gray-500)">${listing.year} · ${listing.location || 'Nigeria'}</span>
         </td>
         <td style="font-weight:600">${formatPrice(listing.price)}</td>
         <td>${getStatusBadge(listing.status)}</td>
@@ -62,16 +51,16 @@ async function loadListings() {
         <td style="font-size:var(--text-sm);color:var(--gray-600)">${listing.whatsappClickCount || 0}</td>
         <td>
           <div style="display:flex;gap:var(--space-2)">
-            <a href="/admin/listing-form.html?id=${safeId}" class="btn btn-sm btn-secondary">Edit</a>
-            ${listing.status === 'sold' ? `<button class="btn btn-sm btn-secondary" onclick="markAsAvailable('${safeId}')">Mark Available</button>` : `<button class="btn btn-sm btn-secondary" onclick="markAsSold('${safeId}')">Mark Sold</button>`}
-            <button class="btn btn-sm btn-destructive" onclick="deleteListing('${safeId}')">Delete</button>
+            <a href="/admin/listing-form.html?id=${listing.$id}" class="btn btn-sm btn-secondary">Edit</a>
+            ${listing.status === 'sold' ? `<button class="btn btn-sm btn-secondary" onclick="markAsAvailable('${listing.$id}')">Mark Available</button>` : `<button class="btn btn-sm btn-secondary" onclick="markAsSold('${listing.$id}')">Mark Sold</button>`}
+            <button class="btn btn-sm btn-destructive" onclick="deleteListing('${listing.$id}')">Delete</button>
           </div>
         </td>
-      </tr>`;
-    }).join('');
+      </tr>
+    `).join('');
   } catch (err) {
     console.error('Failed to load listings:', err);
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:var(--space-10);color:#e03131">Error loading listings: ${escapeHtml(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:var(--space-10);color:#e03131">Error loading listings: ${err.message}</td></tr>`;
   }
 }
 

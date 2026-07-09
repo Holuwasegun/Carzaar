@@ -10,11 +10,6 @@ let currentImages = [];
 let currentIndex = 0;
 let listingData = null;
 
-function escapeHtml(str) {
-  if (typeof str !== 'string') return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
 function getListingId() {
   const params = new URLSearchParams(window.location.search);
   return params.get('id');
@@ -107,12 +102,12 @@ function renderListing(listing) {
 
   const overviewSpecs = document.getElementById('overviewSpecs');
   overviewSpecs.innerHTML = `
-    <div class="spec-item"><div class="spec-item-label">Make</div><div class="spec-item-value">${escapeHtml(listing.make)}</div></div>
-    <div class="spec-item"><div class="spec-item-label">Model</div><div class="spec-item-value">${escapeHtml(listing.model)}</div></div>
-    <div class="spec-item"><div class="spec-item-label">Year</div><div class="spec-item-value">${escapeHtml(String(listing.year))}</div></div>
-    <div class="spec-item"><div class="spec-item-label">Condition</div><div class="spec-item-value">${escapeHtml(listing.condition)}</div></div>
-    <div class="spec-item"><div class="spec-item-label">Mileage</div><div class="spec-item-value">${escapeHtml(formatMileage(listing.mileage))}</div></div>
-    <div class="spec-item"><div class="spec-item-label">Price</div><div class="spec-item-value" style="font-weight:700;color:var(--color-accent)">${escapeHtml(formatPrice(listing.price))}</div></div>
+    <div class="spec-item"><div class="spec-item-label">Make</div><div class="spec-item-value">${listing.make}</div></div>
+    <div class="spec-item"><div class="spec-item-label">Model</div><div class="spec-item-value">${listing.model}</div></div>
+    <div class="spec-item"><div class="spec-item-label">Year</div><div class="spec-item-value">${listing.year}</div></div>
+    <div class="spec-item"><div class="spec-item-label">Condition</div><div class="spec-item-value">${listing.condition}</div></div>
+    <div class="spec-item"><div class="spec-item-label">Mileage</div><div class="spec-item-value">${formatMileage(listing.mileage)}</div></div>
+    <div class="spec-item"><div class="spec-item-label">Price</div><div class="spec-item-value" style="font-weight:700;color:var(--color-accent)">${formatPrice(listing.price)}</div></div>
   `;
 
   const specsGrid = document.getElementById('specsGrid');
@@ -123,21 +118,21 @@ function renderListing(listing) {
     { label: 'Drivetrain', value: listing.drivetrain.toUpperCase() },
     { label: 'Color', value: listing.color },
     { label: 'Engine Capacity', value: listing.engineCapacity ? `${listing.engineCapacity}L` : 'N/A' },
-    { label: 'Doors', value: String(listing.numberOfDoors || 'N/A') },
-    { label: 'Seats', value: String(listing.numberOfSeats || 'N/A') },
+    { label: 'Doors', value: listing.numberOfDoors || 'N/A' },
+    { label: 'Seats', value: listing.numberOfSeats || 'N/A' },
     { label: 'VIN', value: listing.vin || 'N/A' },
     { label: 'Plate Number', value: listing.plateNumber || 'N/A' },
   ];
   specsGrid.innerHTML = specs.map(s => `
     <div class="spec-item">
-      <div class="spec-item-label">${escapeHtml(s.label)}</div>
-      <div class="spec-item-value">${escapeHtml(s.value)}</div>
+      <div class="spec-item-label">${s.label}</div>
+      <div class="spec-item-value">${s.value}</div>
     </div>
   `).join('');
 
   const historySpecs = document.getElementById('historySpecs');
   const historyItems = [
-    { label: 'Previous Owners', value: listing.numberOfPreviousOwners != null ? String(listing.numberOfPreviousOwners) : 'N/A' },
+    { label: 'Previous Owners', value: listing.numberOfPreviousOwners != null ? listing.numberOfPreviousOwners : 'N/A' },
     { label: 'Accident History', value: listing.accidentHistory ? listing.accidentHistory.charAt(0).toUpperCase() + listing.accidentHistory.slice(1) : 'Unknown' },
     { label: 'Service History', value: listing.serviceHistoryAvailable ? 'Available' : 'Not Available' },
     { label: 'Spare Key', value: listing.hasSpareKey ? 'Yes' : 'No' },
@@ -146,14 +141,14 @@ function renderListing(listing) {
   ];
   historySpecs.innerHTML = historyItems.map(h => `
     <div class="spec-item">
-      <div class="spec-item-label">${escapeHtml(h.label)}</div>
-      <div class="spec-item-value">${escapeHtml(h.value)}</div>
+      <div class="spec-item-label">${h.label}</div>
+      <div class="spec-item-value">${h.value}</div>
     </div>
   `).join('');
 
   const featuresList = document.getElementById('featuresList');
   if (listing.features && listing.features.length > 0) {
-    featuresList.innerHTML = listing.features.map(f => `<span class="feature-tag">${escapeHtml(f)}</span>`).join('');
+    featuresList.innerHTML = listing.features.map(f => `<span class="feature-tag">${f}</span>`).join('');
   } else {
     featuresList.innerHTML = '<span style="font-size:var(--text-sm);color:var(--gray-500)">No features listed</span>';
   }

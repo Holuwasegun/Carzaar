@@ -26,14 +26,12 @@ async function loadFeatures() {
       return;
     }
 
-    container.innerHTML = response.documents.map(f => {
-      const safeLabel = f.label.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      return `
+    container.innerHTML = response.documents.map(f => `
       <label>
-        <input type="checkbox" value="${safeLabel}" class="feature-checkbox">
-        ${safeLabel}
-      </label>`;
-    }).join('');
+        <input type="checkbox" value="${f.label}" class="feature-checkbox">
+        ${f.label}
+      </label>
+    `).join('');
   } catch (err) {
     console.warn('Failed to load features:', err);
     container.innerHTML = '<span style="font-size:var(--text-sm);color:var(--gray-500)">Could not load features list.</span>';
