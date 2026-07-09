@@ -51,7 +51,7 @@ function getImageUrl(storageFileId) {
 }
 
 function getOptimizedImageUrl(storageFileId) {
-  return `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${encodeUri(storageFileId)}/preview?project=${encodeUri(APPWRITE_PROJECT_ID)}&width=400&quality=80`;
+  return `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${encodeUri(storageFileId)}/view?project=${encodeUri(APPWRITE_PROJECT_ID)}`;
 }
 
 function formatPrice(price) {
@@ -231,7 +231,6 @@ async function main() {
 
   console.log('Fetching listings...');
   const data = await databases.listDocuments(APPWRITE_DATABASE_ID, 'listings', [
-    Query.equal('status', 'available'),
     Query.limit(100),
   ]);
   const listings = data.documents || [];
