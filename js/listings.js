@@ -10,6 +10,22 @@ let displayedCount = 0;
 let lastDocument = null;
 let hasMore = true;
 let isLoading = false;
+const imageCache = {};
+
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function getCardImageUrl(storageFileId) {
+  if (!storageFileId) return null;
+  try {
+    return storage.getFilePreview(BUCKET_ID, storageFileId, 400, undefined, undefined, 80);
+  } catch (err) {
+    console.warn('Failed to generate card image URL:', err);
+    return null;
+  }
+}
 
 const listingsGrid = document.getElementById('listingsGrid');
 const loadMoreBtn = document.getElementById('loadMore');
@@ -60,6 +76,7 @@ async function fetchMoreListings() {
     lastDocument = newDocs.length > 0 ? newDocs[newDocs.length - 1] : null;
 
     displayedCount += newDocs.length;
+    await getAllImagesMap(newDocs.map(l => l.$id));
     await applyFilters();
   } catch (err) {
     console.error('Load more error:', err);
@@ -72,10 +89,13 @@ async function fetchMoreListings() {
 }
 
 async function getAllImagesMap(listingIds) {
+  const idsToFetch = listingIds.filter(id => !imageCache[id]);
+  if (idsToFetch.length === 0) return imageCache;
+
   const map = {};
   const chunkSize = 25;
-  for (let i = 0; i < listingIds.length; i += chunkSize) {
-    const chunk = listingIds.slice(i, i + chunkSize);
+  for (let i = 0; i < idsToFetch.length; i += chunkSize) {
+    const chunk = idsToFetch.slice(i, i + chunkSize);
     try {
       const response = await databases.listDocuments(databaseId, 'listing_images', [
         Query.equal('listingId', chunk),
@@ -90,7 +110,9 @@ async function getAllImagesMap(listingIds) {
       console.warn('Failed to fetch images chunk:', err);
     }
   }
-  return map;
+
+  Object.assign(imageCache, map);
+  return imageCache;
 }
 
 function formatPrice(price) {
@@ -112,23 +134,33 @@ function getListingTitle(listing) {
 }
 
 function renderCard(listing, firstImageUrl) {
-  const title = getListingTitle(listing);
+  const title = escapeHtml(getListingTitle(listing));
+  const safeId = escapeHtml(listing.$id);
   const imgSrc = firstImageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23e9ecef"%3E%3Crect width="400" height="300"/%3E%3Ctext x="50%" y="50%" fill="%23adb5bd" font-size="16" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
 
+  const conditionLabel = listing.condition === 'Foreign Used (Tokunbo)' ? 'Tokunbo'
+    : listing.condition === 'Nigerian Used' ? 'Nigerian Used' : 'Brand New';
+  const safeConditionClass = escapeHtml(getConditionClass(listing.condition));
+  const safeColor = listing.color ? escapeHtml(` (${listing.color})`) : '';
+  const safePrice = escapeHtml(formatPrice(listing.price));
+  const safeLocation = escapeHtml(listing.location || 'Nigeria');
+  const safeMileage = escapeHtml(formatMileage(listing.mileage));
+  const isSold = listing.status === 'sold';
+
   return `
-    <article class="card" role="listitem" data-id="${listing.$id}" onclick="window.location.href='/listings/detail.html?id=${listing.$id}'">
-      <div class="card-image${listing.status === 'sold' ? ' sold' : ''}">
+    <article class="card" role="listitem" data-id="${safeId}" onclick="window.location.href='/listings/detail.html?id=${safeId}'">
+      <div class="card-image${isSold ? ' sold' : ''}">
         <img src="${imgSrc}" alt="${title}" loading="lazy">
-        <span class="condition-badge ${getConditionClass(listing.condition)}">${listing.condition === 'Foreign Used (Tokunbo)' ? 'Tokunbo' : listing.condition === 'Nigerian Used' ? 'Nigerian Used' : 'Brand New'}</span>
-        ${listing.status === 'sold' ? '<div class="sold-overlay"><span>SOLD</span></div>' : ''}
+        <span class="condition-badge ${safeConditionClass}">${escapeHtml(conditionLabel)}</span>
+        ${isSold ? '<div class="sold-overlay"><span>SOLD</span></div>' : ''}
       </div>
       <div class="card-body">
-        <div class="card-title">${title}${listing.color ? ` (${listing.color})` : ''}</div>
-        <div class="card-price">${formatPrice(listing.price)}</div>
+        <div class="card-title">${title}${safeColor}</div>
+        <div class="card-price">${safePrice}</div>
         <div class="card-meta">
-          <span class="location">${listing.location || 'Nigeria'}</span>
+          <span class="location">${safeLocation}</span>
           <span>·</span>
-          <span class="mileage">${formatMileage(listing.mileage)}</span>
+          <span class="mileage">${safeMileage}</span>
         </div>
       </div>
     </article>
@@ -225,8 +257,6 @@ function sortListings(listings, sortKey) {
 }
 
 function updateChecklistCounts() {
-  const filters = getFilterState();
-
   document.querySelectorAll('#makeChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
@@ -296,12 +326,7 @@ async function applyFilters() {
   for (const listing of displayListings) {
     const images = imagesMap[listing.$id] || [];
     const firstImage = images.length > 0 ? images[0] : null;
-    let imgUrl = null;
-    if (firstImage) {
-      try {
-        imgUrl = storage.getFileView(BUCKET_ID, firstImage.storageFileId);
-      } catch {}
-    }
+    const imgUrl = firstImage ? getCardImageUrl(firstImage.storageFileId) : null;
     html += renderCard(listing, imgUrl);
   }
 
@@ -317,7 +342,7 @@ function updateMakeChips(listings) {
   const chipContainer = document.getElementById('quickMakeChips');
   const makes = [...new Set(listings.map(l => l.make))].slice(0, 6);
   chipContainer.innerHTML = makes.map(make => `
-    <button class="filter-chip" data-make="${make}">${make}</button>
+    <button class="filter-chip" data-make="${escapeHtml(make)}">${escapeHtml(make)}</button>
   `).join('');
 
   chipContainer.querySelectorAll('.filter-chip').forEach(chip => {
@@ -341,19 +366,19 @@ function buildChecklists() {
   const colors = [...new Set(allListings.map(l => l.color))].sort();
 
   document.getElementById('makeChecklist').innerHTML = makes.map(make => `
-    <label><input type="checkbox" value="${make}"> ${make} <span class="count"></span></label>
+    <label><input type="checkbox" value="${escapeHtml(make)}"> ${escapeHtml(make)} <span class="count"></span></label>
   `).join('');
 
   document.getElementById('conditionChecklist').innerHTML = conditions.map(cond => `
-    <label><input type="checkbox" value="${cond}"> ${cond} <span class="count"></span></label>
+    <label><input type="checkbox" value="${escapeHtml(cond)}"> ${escapeHtml(cond)} <span class="count"></span></label>
   `).join('');
 
   document.getElementById('bodyTypeChecklist').innerHTML = bodyTypes.map(type => `
-    <label><input type="checkbox" value="${type}"> ${type.charAt(0).toUpperCase() + type.slice(1)} <span class="count"></span></label>
+    <label><input type="checkbox" value="${escapeHtml(type)}"> ${escapeHtml(type.charAt(0).toUpperCase() + type.slice(1))} <span class="count"></span></label>
   `).join('');
 
   document.getElementById('colorChecklist').innerHTML = colors.map(color => `
-    <label><input type="checkbox" value="${color}"> ${color} <span class="count"></span></label>
+    <label><input type="checkbox" value="${escapeHtml(color)}"> ${escapeHtml(color)} <span class="count"></span></label>
   `).join('');
 
   document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => {
@@ -528,6 +553,7 @@ async function init() {
     setupMobileFilters();
     setupResetFilters();
 
+    await getAllImagesMap(allListings.map(l => l.$id));
     await applyFilters();
 
     loadMoreBtn.addEventListener('click', fetchMoreListings);
