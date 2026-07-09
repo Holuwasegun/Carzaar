@@ -940,3 +940,91 @@ input[type="file"].form-input {
   background: var(--gray-100);
   color: var(--gray-600);
 }
+
+.sell-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.sell-modal-overlay.open {
+  display: flex;
+}
+
+.sell-modal {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-xl);
+  animation: modalIn var(--transition-slow) ease-out;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.sell-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+
+.sell-modal-header h3 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-brand);
+}
+
+.sell-modal-close {
+  font-size: var(--text-2xl);
+  color: var(--gray-500);
+  cursor: pointer;
+  padding: var(--space-2);
+  line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  transition: color var(--transition-fast);
+}
+
+.sell-modal-close:hover {
+  color: var(--gray-900);
+}
+
+.sell-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.sell-link:hover {
+  background: rgba(196, 69, 54, 0.08);
+  text-decoration: none;
+}
