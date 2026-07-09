@@ -10,8 +10,6 @@ let displayedCount = 0;
 let lastDocument = null;
 let hasMore = true;
 let isLoading = false;
-let prerenderedImageUrls = null;
-let initialPageSize = PAGE_SIZE;
 
 const listingsGrid = document.getElementById('listingsGrid');
 const loadMoreBtn = document.getElementById('loadMore');
@@ -30,16 +28,6 @@ const filterElements = {
   mileageMax: document.getElementById('filterMileageMax'),
 };
 
-function getOptimizedImageUrl(storageFileId, { width = 400, quality = 80 } = {}) {
-  if (!storageFileId) return null;
-  try {
-    return storage.getFilePreview(BUCKET_ID, storageFileId, width, undefined, undefined, quality);
-  } catch (err) {
-    console.warn('Failed to generate optimized image URL:', err);
-    return null;
-  }
-}
-
 async function fetchListings() {
   const queries = [
     Query.orderDesc('$createdAt'),
@@ -49,15 +37,7 @@ async function fetchListings() {
 }
 
 async function fetchMoreListings() {
-  if (isLoading) return;
-
-  if (displayedCount < filteredListings.length && (!lastDocument || !hasMore)) {
-    displayedCount += PAGE_SIZE;
-    await applyFilters();
-    return;
-  }
-
-  if (!lastDocument || !hasMore) return;
+  if (!lastDocument || !hasMore || isLoading) return;
   isLoading = true;
   loadMoreBtn.textContent = 'Loading...';
   loadMoreBtn.disabled = true;
@@ -80,7 +60,6 @@ async function fetchMoreListings() {
     lastDocument = newDocs.length > 0 ? newDocs[newDocs.length - 1] : null;
 
     displayedCount += newDocs.length;
-    await cacheListingImages(newDocs);
     await applyFilters();
   } catch (err) {
     console.error('Load more error:', err);
@@ -89,19 +68,6 @@ async function fetchMoreListings() {
     isLoading = false;
     loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load more cars';
-  }
-}
-
-async function cacheListingImages(listings) {
-  if (!listings.length) return;
-  const ids = listings.map(l => l.$id);
-  const imagesMap = await getAllImagesMap(ids);
-  if (!prerenderedImageUrls) prerenderedImageUrls = {};
-  for (const id of ids) {
-    const images = imagesMap[id] || [];
-    if (images.length > 0) {
-      prerenderedImageUrls[id] = getOptimizedImageUrl(images[0].storageFileId);
-    }
   }
 }
 
@@ -128,7 +94,7 @@ async function getAllImagesMap(listingIds) {
 }
 
 function formatPrice(price) {
-  return '\u20A6' + Number(price).toLocaleString('en-NG');
+  return '₦' + Number(price).toLocaleString('en-NG');
 }
 
 function formatMileage(km) {
@@ -259,6 +225,8 @@ function sortListings(listings, sortKey) {
 }
 
 function updateChecklistCounts() {
+  const filters = getFilterState();
+
   document.querySelectorAll('#makeChecklist label').forEach(label => {
     const checkbox = label.querySelector('input');
     const countEl = label.querySelector('.count');
@@ -303,63 +271,46 @@ function updateChecklistCounts() {
 }
 
 async function applyFilters() {
-  try {
-    const filters = getFilterState();
-    let results = filterListings(allListings, filters);
-    results = sortListings(results, sortSelect.value);
+  const filters = getFilterState();
+  let results = filterListings(allListings, filters);
+  results = sortListings(results, sortSelect.value);
 
-    filteredListings = results;
-    updateResultsCount(filteredListings.length);
+  filteredListings = results;
+  updateResultsCount(filteredListings.length);
 
-    if (filteredListings.length === 0) {
-      listingsGrid.innerHTML = '';
-      emptyState.style.display = 'flex';
-      loadMoreBtn.style.display = 'none';
-      return;
-    }
-
-    emptyState.style.display = 'none';
-
-    const showCount = Math.min(displayedCount > 0 ? displayedCount : initialPageSize, filteredListings.length);
-    const displayListings = filteredListings.slice(0, showCount);
-
-    const imageUrlMap = {};
-    const listingIds = displayListings.map(l => l.$id);
-    const idsToFetch = listingIds.filter(id => !prerenderedImageUrls || !prerenderedImageUrls[id]);
-
-    if (prerenderedImageUrls) {
-      for (const id of listingIds) {
-        if (prerenderedImageUrls[id]) imageUrlMap[id] = prerenderedImageUrls[id];
-      }
-    }
-
-    if (idsToFetch.length > 0) {
-      const imagesMap = await getAllImagesMap(idsToFetch);
-      if (!prerenderedImageUrls) prerenderedImageUrls = {};
-      for (const id of idsToFetch) {
-        const images = imagesMap[id] || [];
-        if (images.length > 0) {
-          const url = getOptimizedImageUrl(images[0].storageFileId);
-          imageUrlMap[id] = url;
-          prerenderedImageUrls[id] = url;
-        }
-      }
-    }
-
-    let html = '';
-    for (const listing of displayListings) {
-      html += renderCard(listing, imageUrlMap[listing.$id] || null);
-    }
-
-    listingsGrid.innerHTML = html;
-    updateChecklistCounts();
-    updateMakeChips(results);
-
-    const hasMoreToShow = displayedCount < filteredListings.length;
-    loadMoreBtn.style.display = hasMoreToShow || hasMore ? 'flex' : 'none';
-  } catch (err) {
-    console.error('applyFilters error:', err);
+  if (filteredListings.length === 0) {
+    listingsGrid.innerHTML = '';
+    emptyState.style.display = 'flex';
+    loadMoreBtn.style.display = 'none';
+    return;
   }
+
+  emptyState.style.display = 'none';
+
+  const showCount = Math.min(displayedCount > 0 ? displayedCount : PAGE_SIZE, filteredListings.length);
+  const displayListings = filteredListings.slice(0, showCount);
+  const listingIds = displayListings.map(l => l.$id);
+  const imagesMap = await getAllImagesMap(listingIds);
+
+  let html = '';
+  for (const listing of displayListings) {
+    const images = imagesMap[listing.$id] || [];
+    const firstImage = images.length > 0 ? images[0] : null;
+    let imgUrl = null;
+    if (firstImage) {
+      try {
+        imgUrl = storage.getFileView(BUCKET_ID, firstImage.storageFileId);
+      } catch {}
+    }
+    html += renderCard(listing, imgUrl);
+  }
+
+  listingsGrid.innerHTML = html;
+  updateChecklistCounts();
+  updateMakeChips(results);
+
+  const hasMoreToShow = displayedCount < filteredListings.length;
+  loadMoreBtn.style.display = hasMoreToShow || hasMore ? 'flex' : 'none';
 }
 
 function updateMakeChips(listings) {
@@ -376,7 +327,7 @@ function updateMakeChips(listings) {
         if (cb.value === make) cb.checked = !cb.checked;
       });
       chip.classList.toggle('active');
-      displayedCount = initialPageSize;
+      displayedCount = PAGE_SIZE;
       window.scrollTo({ top: 0, behavior: 'smooth' });
       applyFilters();
     });
@@ -407,7 +358,7 @@ function buildChecklists() {
 
   document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', () => {
-      displayedCount = initialPageSize;
+      displayedCount = PAGE_SIZE;
       window.scrollTo({ top: 0, behavior: 'smooth' });
       applyFilters();
     });
@@ -433,7 +384,7 @@ function setupPriceChips() {
         filterElements.priceMin.value = '';
         filterElements.priceMax.value = '';
       }
-      displayedCount = initialPageSize;
+      displayedCount = PAGE_SIZE;
       applyFilters();
     });
   });
@@ -443,13 +394,13 @@ function setupFilterInputs() {
   Object.values(filterElements).forEach(el => {
     el.addEventListener('input', debounce(() => {
       deactivatePriceChips();
-      displayedCount = initialPageSize;
+      displayedCount = PAGE_SIZE;
       applyFilters();
     }, 300));
   });
 
   sortSelect.addEventListener('change', () => {
-    displayedCount = initialPageSize;
+    displayedCount = PAGE_SIZE;
     applyFilters();
   });
 }
@@ -496,16 +447,22 @@ function setupMobileFilters() {
       input.addEventListener('input', debounce(() => {
         const sidebarInput = document.getElementById(input.id);
         if (sidebarInput) sidebarInput.value = input.value;
-        displayedCount = initialPageSize;
+        displayedCount = PAGE_SIZE;
         applyFilters();
       }, 300));
     });
 
     content.querySelectorAll('.filter-chip').forEach(chip => {
       chip.addEventListener('click', () => {
+        chip.classList.toggle('active');
         const sidebarChip = Array.from(document.querySelectorAll('#filterSidebar .filter-chip'))
           .find(c => c.dataset.min === chip.dataset.min && c.dataset.max === chip.dataset.max);
         if (sidebarChip) {
+          if (chip.classList.contains('active')) {
+            sidebarChip.classList.add('active');
+          } else {
+            sidebarChip.classList.remove('active');
+          }
           sidebarChip.click();
         }
       });
@@ -528,7 +485,7 @@ function setupResetFilters() {
     document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('.filter-chip.active').forEach(chip => chip.classList.remove('active'));
     Object.values(filterElements).forEach(el => el.value = '');
-    displayedCount = initialPageSize;
+    displayedCount = PAGE_SIZE;
     applyFilters();
   });
 }
@@ -552,14 +509,18 @@ function showToast(message, type) {
 }
 
 async function init() {
-  const prerendered = window.__PRERENDERED__;
+  showSkeletons();
 
-  if (prerendered) {
-    allListings = prerendered.listings;
-    prerenderedImageUrls = prerendered.imageUrls || {};
-    lastDocument = prerendered.lastDocument || null;
-    displayedCount = allListings.length;
-    initialPageSize = allListings.length;
+  try {
+    const response = await fetchListings();
+    allListings = response.documents;
+    lastDocument = allListings.length > 0 ? allListings[allListings.length - 1] : null;
+
+    if (allListings.length < PAGE_SIZE) {
+      hasMore = false;
+    }
+
+    displayedCount = PAGE_SIZE;
 
     buildChecklists();
     setupPriceChips();
@@ -567,49 +528,23 @@ async function init() {
     setupMobileFilters();
     setupResetFilters();
 
-    updateResultsCount(allListings.length);
-    updateChecklistCounts();
-    updateMakeChips(allListings);
+    await applyFilters();
 
-    loadMoreBtn.style.display = 'flex';
-  } else {
-    showSkeletons();
-
-    try {
-      const response = await fetchListings();
-      allListings = response.documents;
-      lastDocument = allListings.length > 0 ? allListings[allListings.length - 1] : null;
-
-      if (allListings.length < PAGE_SIZE) {
-        hasMore = false;
-      }
-
-      displayedCount = initialPageSize;
-
-      buildChecklists();
-      setupPriceChips();
-      setupFilterInputs();
-      setupMobileFilters();
-      setupResetFilters();
-
-      await applyFilters();
-    } catch (err) {
-      console.error('Failed to load listings:', err);
-      listingsGrid.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
-          <h3 class="empty-state-title">Unable to load listings</h3>
-          <p class="empty-state-text">Please check your connection and try again.</p>
-          <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+    loadMoreBtn.addEventListener('click', fetchMoreListings);
+  } catch (err) {
+    console.error('Failed to load listings:', err);
+    listingsGrid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
-      `;
-      resultsCount.textContent = 'Error loading listings';
-    }
+        <h3 class="empty-state-title">Unable to load listings</h3>
+        <p class="empty-state-text">Please check your connection and try again.</p>
+        <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+      </div>
+    `;
+    resultsCount.textContent = 'Error loading listings';
   }
-
-  loadMoreBtn.addEventListener('click', fetchMoreListings);
 }
 
-init().catch(console.error);
+document.addEventListener('DOMContentLoaded', init);
