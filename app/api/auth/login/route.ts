@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { encode } from 'next-auth/jwt';
+import { SignJWT } from 'jose';
+
+const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,23 +35,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = await encode({
-      token: {
-        sub: user.id,
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-      secret: process.env.NEXTAUTH_SECRET!,
-    });
+    const token = await new SignJWT({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('30d')
+      .sign(secret);
 
     const response = NextResponse.json({
       success: true,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     });
 
-    response.cookies.set('next-auth.session-token', token, {
+    response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',

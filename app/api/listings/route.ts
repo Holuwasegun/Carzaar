@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { getSessionFromRequest } from '@/lib/auth';
 import { listingSchema } from '@/validators/listing.validator';
 
 export async function GET(request: NextRequest) {
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },

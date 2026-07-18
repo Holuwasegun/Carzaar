@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decode } from 'next-auth/jwt';
+import { jwtVerify } from 'jose';
+
+const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('next-auth.session-token')?.value ||
-      request.cookies.get('__Secure-next-auth.session-token')?.value;
+    const token = request.cookies.get('auth-token')?.value;
 
     if (!token) {
       return NextResponse.json({});
     }
 
-    const decoded = await decode({
-      token,
-      secret: process.env.NEXTAUTH_SECRET!,
-    });
+    const { payload } = await jwtVerify(token, secret);
 
-    if (!decoded || !decoded.id) {
+    if (!payload || !payload.id) {
       return NextResponse.json({});
     }
 
     return NextResponse.json({
       user: {
-        id: decoded.id,
-        email: decoded.email,
-        name: decoded.name,
-        role: decoded.role,
+        id: payload.id,
+        email: payload.email,
+        name: payload.name,
+        role: payload.role,
       },
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { getSessionFromRequest } from '@/lib/auth';
 import { listingSchema } from '@/validators/listing.validator';
 import { deleteFromR2 } from '@/lib/r2-client';
 
@@ -36,7 +36,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth();
+    const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -73,7 +73,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth();
+    const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
