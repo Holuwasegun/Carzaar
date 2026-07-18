@@ -471,6 +471,11 @@ async function init() {
     setupMobileFilters();
     setupResetFilters();
 
+    loadMoreBtn.addEventListener('click', () => {
+      displayedCount += PAGE_SIZE;
+      applyFilters();
+    });
+
     await applyFilters();
   } catch (err) {
     console.error('Failed to load listings:', err);
