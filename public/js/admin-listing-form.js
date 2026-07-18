@@ -11,15 +11,6 @@ let editListingId = null;
 async function loadFeatures() {
   const container = document.getElementById('featuresChecklist');
   try {
-    const response = await fetch('/api/listings?status=all', {
-      credentials: 'include',
-    });
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to load features');
-    }
-
     const features = [
       'Air Conditioning', 'Sunroof', 'Reverse Camera', 'Bluetooth',
       'Navigation System', 'Leather Seats', 'Cruise Control', 'Alloy Wheels',

@@ -6,11 +6,6 @@ const nextConfig = {
       destination: '/index.html',
     },
   ],
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '10mb',
-    },
-  },
 };
 
 module.exports = nextConfig;

@@ -28,10 +28,4 @@ export function getLocalImageUrl(key: string): string {
   return `${PUBLIC_BASE}/${key}`;
 }
 
-export async function getSignedUrl(key: string, _expiresIn: number = 3600): Promise<string> {
-  return `${PUBLIC_BASE}/${key}`;
-}
 
-export async function getMultipleSignedUrls(keys: string[]): Promise<string[]> {
-  return keys.map((key) => getLocalImageUrl(key));
-}

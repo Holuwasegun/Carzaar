@@ -7,13 +7,10 @@
     "build": "rm -rf .next && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "prerender": "node scripts/prerender-listings.mjs",
-    "migrate": "ts-node --project tsconfig.scripts.json scripts/migrate-appwrite.ts",
-    "migrate-images": "ts-node --project tsconfig.scripts.json scripts/migrate-images.ts",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "ts-node --project tsconfig.scripts.json prisma/seed.ts"
+    "db:seed": "npx ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.8.0",

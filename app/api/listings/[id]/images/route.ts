@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionFromRequest } from '@/lib/auth';
-import { uploadToR2 } from '@/lib/r2-client';
+import { uploadToR2, deleteFromR2 } from '@/lib/r2-client';
 import { validateImageFile } from '@/domain/listing-utils';
 import { APP_CONFIG } from '@/config/constants';
 
@@ -125,8 +125,8 @@ export async function DELETE(
       );
     }
 
-    const { deleteFromR2 } = await import('@/lib/r2-client');
     await deleteFromR2(image.r2Key);
+
 
     await prisma.listingImage.delete({
       where: { id: imageId },

@@ -3,18 +3,7 @@ import { incrementCounter } from './counter.js';
 const DEFAULT_WHATSAPP_NUMBER = '2349158461502';
 
 export async function getWhatsAppNumber() {
-  try {
-    const response = await fetch('/api/listings?status=all');
-    const result = await response.json();
-
-    if (!result.success) {
-      return DEFAULT_WHATSAPP_NUMBER;
-    }
-
-    return DEFAULT_WHATSAPP_NUMBER;
-  } catch {
-    return DEFAULT_WHATSAPP_NUMBER;
-  }
+  return DEFAULT_WHATSAPP_NUMBER;
 }
 
 export function getWhatsAppUrl(number, listingTitle) {
