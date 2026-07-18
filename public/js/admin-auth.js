@@ -1,50 +1,24 @@
-async function getCsrfToken() {
-  const res = await fetch('/api/auth/csrf', { credentials: 'include' });
-  const data = await res.json();
-  return data.csrfToken;
-}
-
 export async function login(email, password) {
-  const csrfToken = await getCsrfToken();
-
-  const body = new URLSearchParams();
-  body.append('email', email);
-  body.append('password', password);
-  body.append('redirect', 'false');
-  body.append('json', 'true');
-  body.append('csrfToken', csrfToken);
-
-  const response = await fetch('/api/auth/callback/credentials', {
+  const response = await fetch('/api/auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
     credentials: 'include',
   });
 
-  if (!response.ok) {
-    throw new Error('Login failed. Check your credentials.');
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.error || 'Login failed');
   }
 
-  const result = await response.json().catch(() => null);
-
-  if (result && result.url) {
-    window.location.href = result.url;
-  } else {
-    window.location.href = '/admin/dashboard.html';
-  }
+  window.location.href = '/admin/dashboard.html';
 }
 
 export async function logout() {
-  const csrfToken = await getCsrfToken();
-
   try {
-    const body = new URLSearchParams();
-    body.append('csrfToken', csrfToken);
-
     await fetch('/api/auth/signout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
       credentials: 'include',
     });
   } catch (err) {
