@@ -34,7 +34,7 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma
-prisma/migrations/
+# migrations are intentionally NOT ignored so they can be deployed in production
 
 # uploaded images
 public/uploads/
