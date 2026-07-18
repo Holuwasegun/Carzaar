@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
       request.cookies.get('__Secure-next-auth.session-token')?.value;
 
     if (!sessionToken) {
-      const loginUrl = new URL('/admin/login', request.url);
+      const loginUrl = new URL('/admin/login.html', request.url);
       return NextResponse.redirect(loginUrl);
     }
   }
