@@ -1,11 +1,11 @@
 ---
 name: r2-storage-handler
-description: Handles image uploads and deletions using the defined R2 abstraction layer to mitigate ephemeral local storage risks.
+description: Handles image uploads and deletions using the defined Cloudflare R2 abstraction layer.
 ---
 
 # R2 Storage Handler
 
-**Purpose:** Ensures image uploads interact correctly with the abstraction layer intended for Cloudflare R2 migration.
+**Purpose:** Ensures image uploads interact correctly with the Cloudflare R2 abstraction layer.
 **Traces to:** PRD Section 9 (Risk 1), PRD Section 5.8, `uploads-and-storage.md`.
 
 ## Execution Steps

@@ -265,11 +265,11 @@ The application does not use background workers or async job queues. All operati
 
 | Layer | Current | Migration-ready |
 |---|---|---|
-| Images | Local filesystem (`public/uploads/`) | Cloudflare R2 (abstracted via `r2-client.ts`) |
+| Images | Cloudflare R2 (abstracted via `r2-client.ts`) | Local filesystem fallback available |
 | Database | Neon PostgreSQL (serverless, connection string via `DATABASE_URL`) | Any PostgreSQL-compatible provider |
 | Sessions | Stateless JWT in `httpOnly` cookie | N/A (no server-side session store needed) |
 
-> **⚠️ CRITICAL:** The local filesystem storage (`public/uploads/`) is **not persistent on Vercel's serverless functions**. All uploaded images will be lost on redeployment. Migration to R2 or S3 is **required before production use**.
+> **✅ RESOLVED:** The application now successfully uses Cloudflare R2 for persistent image storage across serverless deployments.
 
 ### AI integration boundary
 
@@ -327,7 +327,7 @@ No payment processing is implemented. Carzaar is a listing/discovery platform. A
 
 | # | Risk | Severity | Likelihood | Mitigation |
 |---|---|---|---|---|
-| 1 | **Image storage loss on redeployment** — Vercel serverless functions have ephemeral filesystems. All uploaded images stored in `public/uploads/` will be erased on redeploy. | 🔴 Critical | Certain (on Vercel) | Migrate `r2-client.ts` to use Cloudflare R2 or AWS S3 as the backing store. The abstraction layer is already in place. |
+| 1 | **Image storage loss on redeployment** — Vercel serverless functions have ephemeral filesystems. All uploaded images stored in `public/uploads/` will be erased on redeploy. | 🟢 Mitigated | Implemented | Migrated `r2-client.ts` to use Cloudflare R2. Local filesystem is only a fallback. |
 | 2 | **Single admin bottleneck** — Only one admin can manage listings. If the admin is unavailable, no inventory changes can be made. | 🟡 Medium | Medium | Add multi-user support with role-based access. The `User` model already has a `role` field. |
 | 3 | **No rate limiting** — The counter increment endpoint (`/api/listings/{id}/increment`) is unauthenticated and has no rate limiting, enabling count inflation by bots or scripts. | 🟡 Medium | Medium | Add IP-based rate limiting (e.g., `@vercel/edge` rate limiter or Cloudflare WAF rules). |
 | 4 | **No CSRF protection on custom auth** — While the original README mentions CSRF via Auth.js, the actual implementation uses custom JWT auth without CSRF tokens. The `sameSite=lax` cookie mitigates most attacks, but the POST signout endpoint is vulnerable. | 🟡 Medium | Low | Add CSRF token validation or use `sameSite=strict`. |
@@ -508,7 +508,7 @@ erDiagram
 | [ASSUMPTION-3] | **WhatsApp is the primary communication channel** for Nigerian car buyers. No alternative channels (SMS, email, in-app chat) are needed. |
 | [ASSUMPTION-4] | The inventory will remain below **500 listings** in v1, making client-side filtering viable. |
 | [ASSUMPTION-5] | The application is currently hosted on **Vercel's hobby/free tier** and the database is on **Neon's free tier**. |
-| [ASSUMPTION-6] | Image storage will be **migrated from local filesystem to Cloudflare R2** before any production use on Vercel. |
+| [ASSUMPTION-6] | Image storage has been **successfully migrated to Cloudflare R2**. |
 | [ASSUMPTION-7] | The `Session` model in the Prisma schema is a **legacy artifact** from an earlier Auth.js integration and is not currently used by the custom JWT auth system. |
 | [ASSUMPTION-8] | The `legacyId` field on `Listing` was used for a **one-time migration from Appwrite** and is no longer needed for new listings. |
 | [ASSUMPTION-9] | There is no formal **monetization** in v1. The platform exists as a **professional storefront** for the dealer. |
@@ -542,7 +542,7 @@ erDiagram
 **Theme:** Make the platform reliable and production-ready.
 
 **Scope:**
-- [ ] **Image storage migration:** Replace local filesystem with Cloudflare R2 in `r2-client.ts`
+- [x] **Image storage migration:** Replace local filesystem with Cloudflare R2 in `r2-client.ts`
 - [ ] **Server-side filtering & pagination:** Move filtering logic from client to API with cursor-based pagination
 - [ ] **Rate limiting:** Add rate limiting to counter increment and public API endpoints
 - [ ] **Database indexes:** Add indexes on `make`, `condition`, `status`, `price`, `year` for query performance
@@ -585,7 +585,7 @@ erDiagram
 
 | # | Question | Impact | Decision needed by |
 |---|---|---|---|
-| Q1 | **When will image storage be migrated to R2/S3?** Current local storage is not persistent on Vercel. This is a **deployment blocker** for production. | Critical | Before launch |
+| Q1 | **When will image storage be migrated to R2/S3?** | Resolved | Done in v1 |
 | Q2 | **Should the `Session` model be removed from the Prisma schema?** It appears to be a legacy artifact from Auth.js. Keeping it creates unused tables. | Low | v1 |
 | Q3 | **What is the expected inventory size at launch?** This determines whether client-side filtering is acceptable or server-side filtering is needed immediately. | High | Before launch |
 | Q4 | **Is multi-dealer support planned for v2?** This significantly impacts database design (adding a `dealerId` foreign key to listings, dealer registration flow). | High | Before v1 finishes |

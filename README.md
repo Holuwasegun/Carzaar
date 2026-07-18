@@ -10,7 +10,7 @@ Nigerian car marketplace. Vanilla HTML/CSS/JS frontend, Next.js API routes, Post
 | Backend | Next.js 14 App Router (API routes) |
 | Database | PostgreSQL (Neon) + Prisma ORM |
 | Auth | Auth.js (Credentials Provider) |
-| Storage | Local file system (Cloudflare R2 ready) |
+| Storage | Cloudflare R2 (with local fallback) |
 | Validation | Zod |
 | Hosting | Vercel |
 
@@ -35,7 +35,7 @@ carzaar/
 │   │   └── listing-form.html         # Create/edit listing form
 │   ├── css/                          # Stylesheets
 │   ├── js/                           # Frontend JavaScript (API-based)
-│   └── uploads/                      # Uploaded images (local storage)
+│   └── uploads/                      # Uploaded images (local storage fallback)
 ├── prisma/
 │   ├── schema.prisma                 # Database schema
 │   └── seed.ts                       # Initial data seeding
@@ -110,6 +110,13 @@ Configure `.env`:
 DATABASE_URL="postgresql://..."
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret"
+
+# Cloudflare R2 Storage
+R2_ACCOUNT_ID="your-cloudflare-account-id"
+R2_ACCESS_KEY_ID="your-access-key-id"
+R2_SECRET_ACCESS_KEY="your-secret-access-key"
+R2_BUCKET_NAME="carzaar-images"
+R2_PUBLIC_URL="https://pub-xxxxxx.r2.dev"
 ```
 
 Set up database and seed admin user:
