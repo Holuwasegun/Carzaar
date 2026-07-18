@@ -36,7 +36,14 @@
         </div>
 
         <div class="form-group" data-field="general">
-          <span class="error" id="loginError"></span>
+          <div class="alert alert-error" id="loginError" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="alert-message"></span>
+          </div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg btn-block" id="loginBtn">Sign in</button>
@@ -58,6 +65,7 @@
     function clearErrors() {
       document.querySelectorAll('.form-group.invalid').forEach(el => el.classList.remove('invalid'));
       loginError.style.display = 'none';
+      loginError.querySelector('.alert-message').textContent = '';
     }
 
     form.addEventListener('submit', async (e) => {
@@ -85,8 +93,8 @@
       try {
         await login(email, password);
       } catch (err) {
-        loginError.textContent = err.message;
-        loginError.style.display = 'block';
+        loginError.querySelector('.alert-message').textContent = err.message;
+        loginError.style.display = 'flex';
         loginBtn.disabled = false;
         loginBtn.textContent = 'Sign in';
       }
