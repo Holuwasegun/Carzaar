@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
+        { success: false, error: 'Email not found' },
         { status: 401 }
       );
     }
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const valid = await bcrypt.compare(password as string, user.password);
     if (!valid) {
       return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
+        { success: false, error: 'Incorrect password' },
         { status: 401 }
       );
     }
