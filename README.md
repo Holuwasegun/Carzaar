@@ -127,8 +127,8 @@ npm run dev
 
 ### Default Admin
 
-- Email: `admin@carzaar.com`
-- Password: `admin123`
+- Email: `oluwasegunawodeyi@gmail.com`
+- Password: `Rapid@101`
 
 ### Deploy to Vercel
 

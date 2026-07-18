@@ -15,22 +15,25 @@ const FEATURES = [
 async function seedAdminUser() {
   console.log('Seeding admin user...');
   const existingUser = await prisma.user.findUnique({
-    where: { email: 'admin@carzaar.com' },
+    where: { email: 'oluwasegunawodeyi@gmail.com' },
   });
 
   if (!existingUser) {
-    const hashedPassword = await bcrypt.hash('admin123', 12);
+    const hashedPassword = await bcrypt.hash('Rapid@101', 12);
     await prisma.user.create({
       data: {
-        email: 'admin@carzaar.com',
+        email: 'oluwasegunawodeyi@gmail.com',
         password: hashedPassword,
-        name: 'Admin',
+        name: 'Oluwasegun',
         role: 'admin',
       },
     });
-    console.log('Admin user created');
   } else {
-    console.log('Admin user already exists');
+    const hashedPassword = await bcrypt.hash('Rapid@101', 12);
+    await prisma.user.update({
+      where: { email: 'oluwasegunawodeyi@gmail.com' },
+      data: { password: hashedPassword },
+    });
   }
 }
 
