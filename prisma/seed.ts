@@ -14,37 +14,54 @@ const FEATURES = [
 
 async function seedAdminUser() {
   console.log('Seeding admin user...');
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!email || !password) {
+    console.warn('⚠️ WARNING: ADMIN_EMAIL or ADMIN_PASSWORD not set in .env. Skipping admin user creation.');
+    return;
+  }
+
   const existingUser = await prisma.user.findUnique({
-    where: { email: 'oluwasegunawodeyi@gmail.com' },
+    where: { email },
   });
 
   if (!existingUser) {
-    const hashedPassword = await bcrypt.hash('Rapid@101', 12);
+    const hashedPassword = await bcrypt.hash(password, 12);
     await prisma.user.create({
       data: {
-        email: 'oluwasegunawodeyi@gmail.com',
+        email: email,
         password: hashedPassword,
-        name: 'Oluwasegun',
+        name: 'Admin',
         role: 'admin',
       },
     });
+    console.log(`Created new admin user: ${email}`);
   } else {
-    const hashedPassword = await bcrypt.hash('Rapid@101', 12);
+    const hashedPassword = await bcrypt.hash(password, 12);
     await prisma.user.update({
-      where: { email: 'oluwasegunawodeyi@gmail.com' },
+      where: { email },
       data: { password: hashedPassword },
     });
+    console.log(`Updated existing admin user: ${email}`);
   }
 }
 
 async function seedAdminProfile() {
   console.log('Seeding admin profile...');
+  const whatsappNumber = process.env.ADMIN_WHATSAPP;
+
+  if (!whatsappNumber) {
+    console.warn('⚠️ WARNING: ADMIN_WHATSAPP not set in .env. Skipping admin profile creation.');
+    return;
+  }
+
   await prisma.adminProfile.upsert({
     where: { id: 'main' },
-    create: { whatsappNumber: '2349158461502' },
-    update: { whatsappNumber: '2349158461502' },
+    create: { whatsappNumber: whatsappNumber },
+    update: { whatsappNumber: whatsappNumber },
   });
-  console.log('Admin profile seeded');
+  console.log('Admin profile seeded with WhatsApp number:', whatsappNumber);
 }
 
 async function main() {

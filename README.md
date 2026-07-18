@@ -127,8 +127,11 @@ npm run dev
 
 ### Default Admin
 
-- Email: `oluwasegunawodeyi@gmail.com`
-- Password: `Rapid@101`
+The default admin user is seeded from your environment variables. 
+Make sure you have set the following in your `.env` file before running the seed script:
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+- `ADMIN_WHATSAPP`
 
 ### Deploy to Vercel
 
