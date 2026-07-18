@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Listing {
+  id                      String    @id @default(uuid())
+  legacyId                String?   @unique
+  make                    String
+  model                   String
+  year                    Int
+  price                   Int
+  condition               String
+  location                String
+  description             String    @db.Text
+  mileage                 Int
+  bodyType                String
+  color                   String
+  transmission            String
+  fuel                    String
+  drivetrain              String
+  engineCapacity          Float?
+  numberOfDoors           Int?
+  numberOfSeats           Int?
+  vin                     String?
+  plateNumber             String?
+  numberOfPreviousOwners  Int       @default(0)
+  accidentHistory         String
+  serviceHistoryAvailable Boolean
+  hasSpareKey             Boolean   @default(true)
+  documentationStatus     String
+  warrantyRemaining       Boolean
+  features                String[]
+  status                  String    @default("available")
+  viewCount               Int       @default(0)
+  whatsappClickCount      Int       @default(0)
+  soldAt                  DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  images ListingImage[]
+}
+
+model ListingImage {
+  id            String   @id @default(uuid())
+  listingId     String
+  r2Key         String
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  listing       Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, r2Key])
+}
+
+model AdminProfile {
+  id              String   @id @default("main")
+  whatsappNumber  String
+  updatedAt       DateTime @updatedAt
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String?
+  role          String    @default("admin")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

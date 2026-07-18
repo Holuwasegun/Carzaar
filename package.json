@@ -1,13 +1,37 @@
 {
   "name": "carzaar",
-  "version": "1.0.0",
-  "description": "Carzaar — Nigerian car marketplace",
-  "type": "module",
+  "version": "2.0.0",
+  "private": true,
   "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
     "prerender": "node scripts/prerender-listings.mjs",
-    "build": "npm run prerender"
+    "migrate": "ts-node --project tsconfig.scripts.json scripts/migrate-appwrite.ts",
+    "migrate-images": "ts-node --project tsconfig.scripts.json scripts/migrate-images.ts",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "ts-node --project tsconfig.scripts.json prisma/seed.ts"
   },
   "dependencies": {
-    "node-appwrite": "^12.0.0"
+    "@auth/prisma-adapter": "^2.4.0",
+    "@prisma/client": "^5.8.0",
+    "bcryptjs": "^3.0.3",
+    "next": "^14.0.4",
+    "next-auth": "^4.24.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.10.6",
+    "@types/react": "^18.2.46",
+    "@types/react-dom": "^18.2.18",
+    "prisma": "^5.8.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
