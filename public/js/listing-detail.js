@@ -195,10 +195,10 @@ async function incrementViewCount(listingId) {
 
 async function init() {
   const listingId = getListingId();
+  const layout = document.getElementById('detailPage');
   if (!listingId) {
     document.getElementById('skeletonLoader').style.display = 'none';
-    document.getElementById('listingDetail').style.display = 'block';
-    document.getElementById('listingDetail').innerHTML = `
+    layout.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-title">Listing not found</div>
         <p class="empty-state-text">No listing ID specified.</p>
@@ -220,7 +220,7 @@ async function init() {
     currentImages = listing.images || [];
 
     document.getElementById('skeletonLoader').style.display = 'none';
-    document.getElementById('listingDetail').style.display = 'block';
+    layout.classList.add('loaded');
 
   renderListing(listing);
   renderGallery();
@@ -237,8 +237,7 @@ async function init() {
   } catch (err) {
     console.error('Failed to load listing:', err);
     document.getElementById('skeletonLoader').style.display = 'none';
-    document.getElementById('listingDetail').style.display = 'block';
-    document.getElementById('listingDetail').innerHTML = `
+    layout.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-title">Listing not found</div>
         <p class="empty-state-text">This car could not be found or may have been removed.</p>
