@@ -154,6 +154,7 @@ function renderListing(listing) {
   }
 
   setupWhatsAppButton(listing);
+  loadSimilarCars(listing);
 }
 
 function formatDocumentationStatus(status) {
@@ -164,6 +165,77 @@ function formatDocumentationStatus(status) {
     'unregistered': 'Unregistered',
   };
   return map[status] || 'N/A';
+}
+
+function renderSimilarCard(listing) {
+  const title = escapeHtml(`${listing.make} ${listing.model} ${listing.year}`);
+  const safeId = escapeHtml(listing.id);
+  const img = listing.images && listing.images.length > 0
+    ? `/api/listings/images/${listing.images[0].id}`
+    : 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23e9ecef"%3E%3Crect width="400" height="300"/%3E%3Ctext x="50%" y="250" fill="%23adb5bd" font-size="16" text-anchor="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+  const isSold = listing.status === 'sold';
+  const conditionLabel = listing.condition === 'Foreign Used (Tokunbo)' ? 'Tokunbo'
+    : listing.condition === 'Nigerian Used' ? 'Nigerian Used' : 'Brand New';
+  const safeColor = listing.color ? escapeHtml(` (${listing.color})`) : '';
+  const safePrice = escapeHtml(formatPrice(listing.price));
+  const safeLocation = escapeHtml(listing.location || 'Nigeria');
+  const safeMileage = escapeHtml(formatMileage(listing.mileage));
+
+  return `
+    <article class="card" role="listitem" onclick="window.location.href='/listings/detail.html?id=${safeId}'">
+      <div class="card-image${isSold ? ' sold' : ''}">
+        <img src="${img}" alt="${title}" loading="lazy">
+        <span class="condition-badge ${escapeHtml(getConditionClass(listing.condition))}">${escapeHtml(conditionLabel)}</span>
+        ${isSold ? '<div class="sold-overlay"><span>SOLD</span></div>' : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${title}${safeColor}</div>
+        <div class="card-price">${safePrice}</div>
+        <div class="card-meta">
+          <span class="location">${safeLocation}</span>
+          <span>&middot;</span>
+          <span class="mileage">${safeMileage}</span>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+async function loadSimilarCars(listing) {
+  const section = document.getElementById('similarSection');
+  const container = document.getElementById('similarCars');
+  if (!section || !container) return;
+
+  try {
+    const response = await fetch('/api/listings?status=available');
+    const result = await response.json();
+    if (!result.success) return;
+
+    const similar = result.data
+      .filter(l => l.id !== listing.id)
+      .sort((a, b) => {
+        let scoreA = 0, scoreB = 0;
+        if (a.make === listing.make) scoreA += 10;
+        if (b.make === listing.make) scoreB += 10;
+        if (a.bodyType === listing.bodyType) scoreA += 5;
+        if (b.bodyType === listing.bodyType) scoreB += 5;
+        if (a.condition === listing.condition) scoreA += 3;
+        if (b.condition === listing.condition) scoreB += 3;
+        const priceDiffA = Math.abs(a.price - listing.price) / listing.price;
+        const priceDiffB = Math.abs(b.price - listing.price) / listing.price;
+        scoreA += Math.max(0, 5 - priceDiffA * 5);
+        scoreB += Math.max(0, 5 - priceDiffB * 5);
+        return scoreB - scoreA;
+      })
+      .slice(0, 4);
+
+    if (similar.length === 0) return;
+
+    container.innerHTML = similar.map(renderSimilarCard).join('');
+    section.style.display = 'block';
+  } catch (err) {
+    console.error('Failed to load similar cars:', err);
+  }
 }
 
 function setupWhatsAppButton(listing) {

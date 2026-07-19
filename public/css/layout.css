@@ -424,6 +424,28 @@
   color: var(--gray-700);
 }
 
+.similar-cars-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 560px) {
+  .similar-cars-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .similar-cars-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.similar-cars-grid .card {
+  cursor: pointer;
+}
+
 .filters-toggle-btn {
   display: inline-flex;
   align-items: center;
