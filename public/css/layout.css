@@ -293,7 +293,7 @@
 
 @media (min-width: 768px) {
   .detail-main {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
   }
 }
@@ -305,8 +305,16 @@
 @media (min-width: 768px) {
   .detail-sidebar {
     grid-column: 2;
-    grid-row: 1 / 3;
+    grid-row: 1;
   }
+}
+
+.detail-sidebar .sidebar-card .text-2xl {
+  margin-bottom: var(--space-1);
+}
+
+.detail-sidebar .sidebar-card .price-tag {
+  margin-top: var(--space-1);
 }
 
 .detail-section {
