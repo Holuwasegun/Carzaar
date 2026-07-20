@@ -257,8 +257,13 @@
 }
 
 @keyframes skeleton-pulse {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .skeleton-card {
@@ -472,7 +477,7 @@ input[type="file"].form-input {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   color: white;
   display: flex;
   align-items: center;
@@ -483,7 +488,7 @@ input[type="file"].form-input {
 }
 
 .image-preview-item .remove-image:hover {
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
 }
 
 .image-gallery {
@@ -549,13 +554,11 @@ input[type="file"].form-input {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    transparent 40%,
-    rgba(224, 49, 49, 0.85) 40%,
-    rgba(224, 49, 49, 0.85) 60%,
-    transparent 60%
-  );
+  background: linear-gradient(135deg,
+      transparent 40%,
+      rgba(224, 49, 49, 0.85) 40%,
+      rgba(224, 49, 49, 0.85) 60%,
+      transparent 60%);
 }
 
 .sold-watermark span {
@@ -594,7 +597,7 @@ input[type="file"].form-input {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
   color: var(--gray-800);
   display: flex;
   align-items: center;
@@ -786,7 +789,7 @@ input[type="file"].form-input {
 .confirm-dialog {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: none;
   align-items: center;
   justify-content: center;
@@ -900,7 +903,7 @@ input[type="file"].form-input {
 }
 
 .admin-header .admin-nav a {
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
   font-size: var(--text-sm);
   font-weight: 500;
 }
@@ -912,17 +915,18 @@ input[type="file"].form-input {
 
 .admin-header .admin-nav .btn {
   color: white;
-  border-color: rgba(255,255,255,0.3);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .admin-header .admin-nav .btn:hover {
-  border-color: rgba(255,255,255,0.6);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 @media (max-width: 767px) {
   .admin-header .admin-nav {
     gap: var(--space-2);
   }
+
   .admin-header .admin-nav a,
   .admin-header .admin-nav .btn {
     font-size: var(--text-xs);
@@ -974,6 +978,7 @@ input[type="file"].form-input {
     opacity: 0;
     transform: scale(0.92) translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -1195,7 +1200,7 @@ input[type="file"].form-input {
   display: none;
   width: 18px;
   height: 18px;
-  border: 2.5px solid rgba(255,255,255,0.3);
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
 }
@@ -1206,7 +1211,9 @@ input[type="file"].form-input {
 }
 
 @keyframes sellSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .sell-link {
@@ -1262,6 +1269,7 @@ input[type="file"].form-input {
     transform: translateY(-10px);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -1339,13 +1347,11 @@ input[type="file"].form-input {
   z-index: 1;
   pointer-events: none;
   opacity: 0.03;
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--color-brand) 0,
-    var(--color-brand) 2px,
-    transparent 2px,
-    transparent 10px
-  );
+  background-image: repeating-linear-gradient(45deg,
+      var(--color-brand) 0,
+      var(--color-brand) 2px,
+      transparent 2px,
+      transparent 10px);
 }
 
 @keyframes fade-in-up {
@@ -1353,6 +1359,7 @@ input[type="file"].form-input {
     transform: translateY(20px);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -1360,7 +1367,15 @@ input[type="file"].form-input {
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
