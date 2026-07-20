@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionFromRequest } from '@/lib/auth';
 import { listingSchema } from '@/validators/listing.validator';
+import { ZodError } from 'zod';
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: listing }, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 400 }

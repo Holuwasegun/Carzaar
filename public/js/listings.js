@@ -5,7 +5,7 @@ let filteredListings = [];
 let displayedCount = 0;
 let hasMore = true;
 let isLoading = false;
-const imageCache = {};
+
 
 function escapeHtml(str) {
   if (typeof str !== 'string') return '';
@@ -173,7 +173,7 @@ function sortListings(listings, sortKey) {
       break;
     case 'newest':
     default:
-      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       break;
   }
   return sorted;

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSessionFromRequest } from '@/lib/auth';
 import { listingSchema } from '@/validators/listing.validator';
 import { deleteFromR2 } from '@/lib/r2-client';
+import { ZodError } from 'zod';
 
 export async function GET(
   request: NextRequest,
@@ -54,7 +55,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: listing });
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 400 }

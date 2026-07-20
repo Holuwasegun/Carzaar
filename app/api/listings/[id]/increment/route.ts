@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { incrementSchema } from '@/validators/listing.validator';
+import { ZodError } from 'zod';
 
 export async function POST(
   request: NextRequest,
@@ -19,7 +20,7 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 400 }
