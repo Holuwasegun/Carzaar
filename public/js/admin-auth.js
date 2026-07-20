@@ -35,9 +35,9 @@ async function getSession() {
 
     if (!response.ok) return null;
 
-    const session = await response.json();
-    if (session && session.user) {
-      return session;
+    const result = await response.json();
+    if (result && result.success && result.data && result.data.user) {
+      return result.data;
     }
     return null;
   } catch {

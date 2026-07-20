@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { jwtSecret } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
+import { z } from 'zod';
 
-const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const parsed = loginSchema.safeParse(body);
 
-    if (!email || !password) {
+    if (!parsed.success) {
       return NextResponse.json(
         { success: false, error: 'Email and password required' },
         { status: 400 }
       );
     }
+
+    const { email, password } = parsed.data;
 
     const user = await prisma.user.findUnique({
       where: { email: email as string },
@@ -22,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Email not found' },
+        { success: false, error: 'Invalid email or password' },
         { status: 401 }
       );
     }
@@ -30,7 +38,7 @@ export async function POST(request: NextRequest) {
     const valid = await bcrypt.compare(password as string, user.password);
     if (!valid) {
       return NextResponse.json(
-        { success: false, error: 'Incorrect password' },
+        { success: false, error: 'Invalid email or password' },
         { status: 401 }
       );
     }
@@ -44,7 +52,7 @@ export async function POST(request: NextRequest) {
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('30d')
-      .sign(secret);
+      .sign(jwtSecret);
 
     const response = NextResponse.json({
       success: true,
